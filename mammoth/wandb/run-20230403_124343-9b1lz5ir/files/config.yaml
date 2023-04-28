@@ -1,0 +1,132 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.14.0
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    python_version: 3.9.12
+    start_time: 1680518623.753891
+    t:
+      1:
+      - 1
+      - 41
+      - 51
+      - 55
+      2:
+      - 1
+      - 41
+      - 51
+      - 55
+      3:
+      - 2
+      - 16
+      - 23
+      4: 3.9.12
+      5: 0.14.0
+      8:
+      - 5
+alpha:
+  desc: null
+  value: 1.0
+batch_size:
+  desc: null
+  value: 32
+beta:
+  desc: null
+  value: 1.0
+buffer_size:
+  desc: null
+  value: 5000
+conf_host:
+  desc: null
+  value: DSFHSWF-PowerEdge-R7525
+conf_jobnum:
+  desc: null
+  value: 8d8cee46-bc6c-47e7-955a-266fc764254a
+conf_timestamp:
+  desc: null
+  value: '2023-04-03 12:43:39.750502'
+dataset:
+  desc: null
+  value: seq-cifar10
+debug_mode:
+  desc: null
+  value: 0
+disable_log:
+  desc: null
+  value: 0
+distributed:
+  desc: null
+  value: 'no'
+eta:
+  desc: null
+  value: 0.1
+gamma:
+  desc: null
+  value: 0.85
+ignore_other_metrics:
+  desc: null
+  value: 0
+lambd:
+  desc: null
+  value: 0.1
+lr:
+  desc: null
+  value: 0.0001
+m:
+  desc: null
+  value: 0.3
+minibatch_size:
+  desc: null
+  value: 32
+model:
+  desc: null
+  value: xder
+n_epochs:
+  desc: null
+  value: 20
+non_verbose:
+  desc: null
+  value: 0
+notes:
+  desc: null
+  value: null
+nowand:
+  desc: null
+  value: 0
+optim_mom:
+  desc: null
+  value: 0.0
+optim_nesterov:
+  desc: null
+  value: 0
+optim_wd:
+  desc: null
+  value: 0.0
+seed:
+  desc: null
+  value: null
+simclr_batch_size:
+  desc: null
+  value: 64
+simclr_num_aug:
+  desc: null
+  value: 2
+simclr_temp:
+  desc: null
+  value: 5
+start_from:
+  desc: null
+  value: 0
+validation:
+  desc: null
+  value: 0
+wandb_entity:
+  desc: null
+  value: fneubuerger
+wandb_project:
+  desc: null
+  value: mammoth

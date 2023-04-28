@@ -1,0 +1,105 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.14.0
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    python_version: 3.9.12
+    start_time: 1680515222.059318
+    t:
+      1:
+      - 1
+      - 41
+      - 51
+      - 55
+      2:
+      - 1
+      - 41
+      - 51
+      - 55
+      3:
+      - 2
+      - 16
+      - 23
+      4: 3.9.12
+      5: 0.14.0
+      8:
+      - 5
+alpha:
+  desc: null
+  value: 0.1
+batch_size:
+  desc: null
+  value: 32
+buffer_size:
+  desc: null
+  value: 10
+conf_host:
+  desc: null
+  value: DSFHSWF-PowerEdge-R7525
+conf_jobnum:
+  desc: null
+  value: ee00571e-95c5-45f2-af2b-16106119f1f3
+conf_timestamp:
+  desc: null
+  value: '2023-04-03 11:47:00.644169'
+dataset:
+  desc: null
+  value: seq-cifar10
+debug_mode:
+  desc: null
+  value: 0
+disable_log:
+  desc: null
+  value: 0
+distributed:
+  desc: null
+  value: 'no'
+ignore_other_metrics:
+  desc: null
+  value: 0
+lr:
+  desc: null
+  value: 0.0001
+minibatch_size:
+  desc: null
+  value: 32
+model:
+  desc: null
+  value: der
+n_epochs:
+  desc: null
+  value: 20
+non_verbose:
+  desc: null
+  value: 0
+notes:
+  desc: null
+  value: null
+nowand:
+  desc: null
+  value: 0
+optim_mom:
+  desc: null
+  value: 0.0
+optim_nesterov:
+  desc: null
+  value: 0
+optim_wd:
+  desc: null
+  value: 0.0
+seed:
+  desc: null
+  value: null
+validation:
+  desc: null
+  value: 0
+wandb_entity:
+  desc: null
+  value: fneubuerger
+wandb_project:
+  desc: null
+  value: mammoth

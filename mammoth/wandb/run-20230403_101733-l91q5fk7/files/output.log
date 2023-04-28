@@ -1,0 +1,15 @@
+
+<wandb.sdk.wandb_run.Run at 0x7fd8172861f0>
+---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Input In [3], in <cell line: 2>()
+[1m      1[22m epochs [38m=[39m [38m10
+----> 2 offset [38m=[39m [43mrandom[38m[49m.[39mrandom() [38m/[39m [38m5
+[1m      3[22m [38mfor[39m epoch [38min[39m [38mrange[39m([38m2[39m, epochs):
+[1m      4[22m     acc [38m=[39m [38m1[39m [38m-[39m [38m2[39m [38m**[39m [38m-[39mepoch [38m-[39m random[38m.[39mrandom() [38m/[39m epoch [38m-[39m offset
+NameError: name 'random' is not defined
+---------------------------------------------------------------------------
+ModuleNotFoundError                       Traceback (most recent call last)
+Input In [4], in <cell line: 1>()
+----> 1 [38mimport[39m [38mrandon
+ModuleNotFoundError: No module named 'randon'

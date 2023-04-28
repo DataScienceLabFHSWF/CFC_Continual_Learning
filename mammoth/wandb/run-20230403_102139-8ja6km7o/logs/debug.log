@@ -1,0 +1,19 @@
+2023-04-03 10:21:39,894 INFO    MainThread:3027821 [wandb_setup.py:_flush():76] Configure stats pid to 3027821
+2023-04-03 10:21:39,894 INFO    MainThread:3027821 [wandb_setup.py:_flush():76] Loading settings from /home/datasciencefhswf/.config/wandb/settings
+2023-04-03 10:21:39,894 INFO    MainThread:3027821 [wandb_setup.py:_flush():76] Loading settings from /media/datasciencefhswf/data1/continuous_learning_ltc/mammoth/wandb/settings
+2023-04-03 10:21:39,894 INFO    MainThread:3027821 [wandb_setup.py:_flush():76] Loading settings from environment variables: {}
+2023-04-03 10:21:39,894 INFO    MainThread:3027821 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2023-04-03 10:21:39,894 INFO    MainThread:3027821 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program_relpath': 'utils/main.py', 'program': '/media/datasciencefhswf/data1/continuous_learning_ltc/mammoth/./utils/main.py'}
+2023-04-03 10:21:39,894 INFO    MainThread:3027821 [wandb_init.py:_log_setup():506] Logging user logs to /media/datasciencefhswf/data1/continuous_learning_ltc/mammoth/wandb/run-20230403_102139-8ja6km7o/logs/debug.log
+2023-04-03 10:21:39,894 INFO    MainThread:3027821 [wandb_init.py:_log_setup():507] Logging internal logs to /media/datasciencefhswf/data1/continuous_learning_ltc/mammoth/wandb/run-20230403_102139-8ja6km7o/logs/debug-internal.log
+2023-04-03 10:21:39,894 INFO    MainThread:3027821 [wandb_init.py:init():546] calling init triggers
+2023-04-03 10:21:39,894 INFO    MainThread:3027821 [wandb_init.py:init():552] wandb.init called with sweep_config: {}
+config: {'seed': None, 'notes': None, 'non_verbose': 0, 'disable_log': 0, 'validation': 0, 'ignore_other_metrics': 0, 'debug_mode': 0, 'nowand': 0, 'wandb_entity': 'regaz', 'wandb_project': 'mammoth', 'dataset': 'seq-mnist', 'model': 'er', 'lr': 0.0001, 'optim_wd': 0.0, 'optim_mom': 0.0, 'optim_nesterov': 0, 'n_epochs': 10, 'batch_size': 64, 'distributed': 'no', 'buffer_size': 10, 'minibatch_size': 64, 'conf_jobnum': '5550905f-837b-4332-96de-b64bec6c45a3', 'conf_timestamp': '2023-04-03 10:21:38.591345', 'conf_host': 'DSFHSWF-PowerEdge-R7525'}
+2023-04-03 10:21:39,894 INFO    MainThread:3027821 [wandb_init.py:init():602] starting backend
+2023-04-03 10:21:39,894 INFO    MainThread:3027821 [wandb_init.py:init():606] setting up manager
+2023-04-03 10:21:39,898 INFO    MainThread:3027821 [backend.py:_multiprocessing_setup():106] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2023-04-03 10:21:39,900 INFO    MainThread:3027821 [wandb_init.py:init():613] backend started and connected
+2023-04-03 10:21:39,903 INFO    MainThread:3027821 [wandb_init.py:init():701] updated telemetry
+2023-04-03 10:21:39,917 INFO    MainThread:3027821 [wandb_init.py:init():741] communicating run to backend with 60.0 second timeout
+2023-04-03 10:21:40,276 ERROR   MainThread:3027821 [wandb_init.py:init():764] encountered error: It appears that you do not have permission to access the requested resource. Please reach out to the project owner to grant you access. If you have the correct permissions, verify that there are no issues with your networking setup.(Error 404: Not Found)
+2023-04-03 10:21:41,281 WARNING MsgRouterThr:3027821 [router.py:message_loop():77] message_loop has been closed
