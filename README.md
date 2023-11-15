@@ -6,7 +6,7 @@ This project focuses on exploring the capabilities of Liquid Time Constant (LTC)
 LTC neural networks are known for their ability to adapt and learn from new data over time, making them suitable for tasks that require continual learning without forgetting previously acquired knowledge.
 
 This project tries expore the capabilities of Liquid Time Constant (LTC) neural networks for continual learning using the Mammoth library. 
-It extends its scope to include the application of explainable AI methods to comprehend the decision-making processes of both CFC (Continual Learning with Control Flow Constraints) and LTC models.
+It extends its scope to include the application of explainable AI methods to comprehend the decision-making processes of LTC models.
 
 ### Explainable AI Integration
 
