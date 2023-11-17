@@ -1,5 +1,5 @@
 # CFC_Continual_Learning
-
+The WandB page for this project can be found here: [https://wandb.ai/fneubuerger/mammoth/]
 ## About the Project
 
 This project focuses on exploring the capabilities of Liquid Time Constant (LTC) neural networks for continual learning approaches, utilizing the Mammoth library.
