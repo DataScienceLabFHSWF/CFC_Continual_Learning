@@ -12,6 +12,7 @@ import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from backbone.MNISTMLP import MNISTMLP
+from backbone.MNISTcfc import MNISTcfc
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST
 
@@ -193,7 +194,7 @@ class MNIST360(GCLDataset):
 
     @staticmethod
     def get_backbone() -> torch.nn.Module:
-        return MNISTMLP(28 * 28, 10)
+        return MNISTcfc(28 * 28, 10)
 
     @staticmethod
     def get_loss() -> F.cross_entropy:

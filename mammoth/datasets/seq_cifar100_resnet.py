@@ -9,7 +9,6 @@ import torch.nn.functional as F
 import torch.optim
 import torchvision.transforms as transforms
 from backbone.ResNet18 import resnet18
-from backbone.cnn_cfc import CFCresnet18
 from PIL import Image
 from torchvision.datasets import CIFAR100
 
@@ -108,7 +107,7 @@ class SequentialCIFAR100(ContinualDataset):
 
     @staticmethod
     def get_backbone():
-        return CFCresnet18(SequentialCIFAR100.N_CLASSES_PER_TASK
+        return resnet18(SequentialCIFAR100.N_CLASSES_PER_TASK
                         * SequentialCIFAR100.N_TASKS)
 
     @staticmethod
