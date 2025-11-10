@@ -70,38 +70,77 @@ class ResNet(MammothBackbone):
     """
 
     def __init__(self, block: BasicBlock, num_blocks: List[int],
-                 num_classes: int, nf: int) -> None:
+                 num_classes: int, nf: int, use_cfc: bool = True, 
+                 cfc_hidden_size: int = 256) -> None:
         """
         Instantiates the layers of the network.
+        
+        Architecture Philosophy:
+        - ResNet extracts spatial features from images
+        - CfC processes these features temporally (useful for video/sequences)
+        - For single images in CL: CfC acts as a recurrent readout layer
+          that maintains hidden state across batches/tasks
+        
         :param block: the basic ResNet block
         :param num_blocks: the number of blocks per layer
         :param num_classes: the number of output classes
         :param nf: the number of filters
+        :param use_cfc: whether to use CfC layer (True) or standard linear (False)
+        :param cfc_hidden_size: hidden size for CfC layer
         """
         super(ResNet, self).__init__()
         self.in_planes = nf
         self.block = block
         self.num_classes = num_classes
         self.nf = nf
+        self.use_cfc = use_cfc
+        self.cfc_hidden_size = cfc_hidden_size
+        
+        # Convolutional layers (spatial feature extraction)
         self.conv1 = conv3x3(3, nf * 1)
         self.bn1 = nn.BatchNorm2d(nf * 1)
         self.layer1 = self._make_layer(block, nf * 1, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, nf * 2, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, nf * 4, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, nf * 8, num_blocks[3], stride=2)
-        self.linear = nn.Linear(nf * 8 * block.expansion, num_classes)
-        self.rnn = CfC(512, 256, batch_first=True, proj_size=None)
-	
-        self._features = nn.Sequential(self.conv1,
-                                       self.bn1,
-                                       nn.ReLU(),
-                                       self.layer1,
-                                       self.layer2,
-                                       self.layer3,
-                                       self.layer4,
-                                       self.rnn
-                                       )
+        
+        # Feature dimension after conv layers
+        self.feature_dim = nf * 8 * block.expansion
+        
+        if self.use_cfc:
+            # CfC as a recurrent processing layer
+            # Note: For single images, we can either:
+            # 1. Treat each spatial location as a timestep (use feature maps)
+            # 2. Use CfC as a stateful readout (process batch as sequence)
+            # Here we use option 2: process features with recurrent dynamics
+            
+            from ncps.wirings import AutoNCP
+            # Use NCP wiring for structured sparsity
+            # AutoNCP requires output_size < units - 2
+            wiring = AutoNCP(cfc_hidden_size, cfc_hidden_size // 2)
+            self.cfc = CfC(self.feature_dim, wiring, batch_first=True)
+            self.cfc_output_size = cfc_hidden_size // 2
+            self.linear = nn.Linear(self.cfc_output_size, num_classes)
+        else:
+            # Standard feedforward classifier for ablation comparison
+            self.cfc = None
+            self.cfc_output_size = self.feature_dim
+            self.linear = nn.Linear(self.feature_dim, num_classes)
+        
+        # For feature extraction interface (used by continual learning methods)
+        self._features = nn.Sequential(
+            self.conv1,
+            self.bn1,
+            nn.ReLU(),
+            self.layer1,
+            self.layer2,
+            self.layer3,
+            self.layer4
+        )
         self.classifier = self.linear
+        
+        # Hidden state for CfC (persistent across batches if needed)
+        self.hidden_state = None
 
     def _make_layer(self, block: BasicBlock, planes: int,
                     num_blocks: int, stride: int) -> nn.Module:
@@ -123,32 +162,65 @@ class ResNet(MammothBackbone):
     def forward(self, x: torch.Tensor, returnt='out', hx=None) -> torch.Tensor:
         """
         Compute a forward pass.
-        :param x: input tensor (batch_size, *input_shape)
+        
+        For CfC version:
+        - Extract spatial features with ResNet
+        - Process through CfC for temporal/recurrent processing
+        - CfC maintains hidden state that could stabilize learning
+        
+        :param x: input tensor (batch_size, channels, height, width)
         :param returnt: return type (a string among 'out', 'features', 'all')
-        :return: output tensor (output_classes)
+        :param hx: hidden state for CfC (optional)
+        :return: output tensor (output_classes) or features
         """
         batch_size = x.size(0)
-        seq_len = x.size(1)
-        out = relu(self.bn1(self.conv1(x))) # 64, 32, 32
+        
+        # Spatial feature extraction (ResNet)
+        out = relu(self.bn1(self.conv1(x)))  # 64, 32, 32
         if hasattr(self, 'maxpool'):
             out = self.maxpool(out)
         out = self.layer1(out)  # -> 64, 32, 32
         out = self.layer2(out)  # -> 128, 16, 16
         out = self.layer3(out)  # -> 256, 8, 8
         out = self.layer4(out)  # -> 512, 4, 4
-        out = avg_pool2d(out, out.shape[2]) # -> 512, 1, 1
-        feature = out.view(out.size(0), -1)  # 512
-        out, hx = self.rnn(feature, hx)
+        out = avg_pool2d(out, out.shape[2])  # -> 512, 1, 1
+        feature = out.view(batch_size, -1)  # (batch_size, feature_dim)
         
-        if returnt == 'features':
-            return feature
-
-        out = self.classifier(feature)
+        if self.use_cfc:
+            # Process features through CfC
+            # Reshape to (batch, 1, features) - single timestep per image
+            # Alternative: could process batch as sequence (batch_size, seq_len, features)
+            feature_seq = feature.unsqueeze(1)  # (batch_size, 1, feature_dim)
+            
+            if hx is not None:
+                cfc_out, hx_new = self.cfc(feature_seq, hx)
+            else:
+                cfc_out, hx_new = self.cfc(feature_seq)
+            
+            # Take output from the single timestep
+            cfc_feature = cfc_out.squeeze(1)  # (batch_size, cfc_hidden_size)
+            
+            # Store hidden state for potential use
+            self.hidden_state = hx_new
+            
+            if returnt == 'features':
+                return cfc_feature
+            
+            out = self.classifier(cfc_feature)
+        else:
+            # Standard feedforward path
+            if returnt == 'features':
+                return feature
+            
+            out = self.classifier(feature)
 
         if returnt == 'out':
             return out
         elif returnt == 'all':
-            return (out, feature)
+            if self.use_cfc:
+                return (out, cfc_feature)
+            else:
+                return (out, feature)
 
         raise NotImplementedError("Unknown return type")
 

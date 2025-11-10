@@ -8,6 +8,7 @@ from typing import Tuple, Type
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from backbone.MNISTMLP import MNISTMLP
+from backbone.MNISTcfc import MNISTcfc
 from PIL import Image
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST
@@ -83,7 +84,10 @@ class PermutedMNIST(ContinualDataset):
 
     @staticmethod
     def get_backbone():
-        return MNISTMLP(28 * 28, PermutedMNIST.N_CLASSES_PER_TASK)
+        # Using MNISTcfc with NCP wiring for temporal processing
+        return MNISTcfc(28 * 28, PermutedMNIST.N_CLASSES_PER_TASK, use_ncp_wiring=True, hidden_size=128)
+        # Original baseline:
+        # return MNISTMLP(28 * 28, PermutedMNIST.N_CLASSES_PER_TASK)
 
     @staticmethod
     def get_transform():

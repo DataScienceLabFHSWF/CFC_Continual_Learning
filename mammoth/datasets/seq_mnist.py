@@ -8,6 +8,7 @@ from typing import Tuple
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from backbone.MNISTMLP import MNISTMLP
+from backbone.MNISTcfc import MNISTcfc
 from PIL import Image
 from torchvision.datasets import MNIST
 
@@ -77,8 +78,17 @@ class SequentialMNIST(ContinualDataset):
 
     @staticmethod
     def get_backbone():
-        return MNISTMLP(28 * 28, SequentialMNIST.N_TASKS
-                        * SequentialMNIST.N_CLASSES_PER_TASK)
+        # Use CfC-based backbone for continual learning experiments
+        # Can switch between NCP wiring (use_ncp_wiring=True) and fully-connected (False)
+        return MNISTcfc(28 * 28, 
+                        SequentialMNIST.N_TASKS * SequentialMNIST.N_CLASSES_PER_TASK,
+                        use_ncp_wiring=True,  # Set to False for ablation studies
+                        hidden_size=128,
+                        chunk_size=28)
+        
+        # Original MLP backbone (comment out when using CfC)
+        # return MNISTMLP(28 * 28, SequentialMNIST.N_TASKS
+        #                 * SequentialMNIST.N_CLASSES_PER_TASK)
 
     @staticmethod
     def get_transform():
