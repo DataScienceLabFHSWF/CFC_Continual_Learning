@@ -3,47 +3,45 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import logging
 import sys
-
 import numpy as np
 import torch
-from datasets import get_dataset
 from torch.optim import SGD
 
+
+from backbone import get_backbone
+from datasets import get_dataset
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
-from utils.buffer import Buffer
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Experience Replay.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-
-    parser.add_argument('--hal_lambda', type=float, default=0.1)
-    parser.add_argument('--beta', type=float, default=0.5)
-    parser.add_argument('--gamma', type=float, default=0.1)
-
-    return parser
+from utils.args import add_rehearsal_args, ArgumentParser
+from utils.ring_buffer import RingBuffer as Buffer
 
 
 class HAL(ContinualModel):
+    """Hindsight Anchor Learning."""
     NAME = 'hal'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
-    def __init__(self, backbone, loss, args, transform):
-        super(HAL, self).__init__(backbone, loss, args, transform)
+    @staticmethod
+    def get_parser(parser) -> ArgumentParser:
+        add_rehearsal_args(parser)
+
+        parser.add_argument('--hal_lambda', type=float, default=0.1)
+        parser.add_argument('--beta', type=float, default=0.5)
+        parser.add_argument('--gamma', type=float, default=0.1)
+        return parser
+
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
         self.task_number = 0
-        self.buffer = Buffer(self.args.buffer_size, self.device, get_dataset(args).N_TASKS, mode='ring')
+        self.buffer = Buffer(self.args.buffer_size, n_tasks=get_dataset(args).N_TASKS)
         self.hal_lambda = args.hal_lambda
         self.beta = args.beta
         self.gamma = args.gamma
         self.anchor_optimization_steps = 100
         self.finetuning_epochs = 1
         self.dataset = get_dataset(args)
-        self.spare_model = self.dataset.get_backbone()
+        self.spare_model = get_backbone(self.args)
         self.spare_model.to(self.device)
         self.spare_opt = SGD(self.spare_model.parameters(), lr=self.args.lr)
 
@@ -64,7 +62,8 @@ class HAL(ContinualModel):
 
         # fine tune on memory buffer
         for _ in range(self.finetuning_epochs):
-            inputs, labels = self.buffer.get_data(self.args.batch_size, transform=self.transform)
+            inputs, labels = self.buffer.get_data(self.args.batch_size,
+                                                  transform=self.transform, device=self.device)
             self.spare_opt.zero_grad()
             out = self.spare_model(inputs)
             loss = self.loss(out, labels)
@@ -78,7 +77,6 @@ class HAL(ContinualModel):
         for a_class in classes_for_this_task:
             e_t = torch.rand(self.input_shape, requires_grad=True, device=self.device)
             e_t_opt = SGD([e_t], lr=self.args.lr)
-            print(file=sys.stderr)
             for i in range(self.anchor_optimization_steps):
                 e_t_opt.zero_grad()
                 cum_loss = 0
@@ -107,25 +105,25 @@ class HAL(ContinualModel):
             e_t.requires_grad = False
             self.anchors = torch.cat((self.anchors, e_t.unsqueeze(0)))
             del e_t
-            print('Total anchors:', len(self.anchors), file=sys.stderr)
+            logging.info(f'Total anchors: {len(self.anchors)}')
 
         self.spare_model.zero_grad()
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         real_batch_size = inputs.shape[0]
         if not hasattr(self, 'input_shape'):
             self.input_shape = inputs.shape[1:]
         if not hasattr(self, 'anchors'):
             self.anchors = torch.zeros(tuple([0] + list(self.input_shape))).to(self.device)
         if not hasattr(self, 'phi'):
-            print('Building phi', file=sys.stderr)
+            logging.info('Building phi')
             with torch.no_grad():
                 self.phi = torch.zeros_like(self.net(inputs[0].unsqueeze(0), returnt='features'), requires_grad=False)
             assert not self.phi.requires_grad
 
         if not self.buffer.is_empty():
             buf_inputs, buf_labels = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform)
+                self.args.minibatch_size, transform=self.transform, device=self.device)
             inputs = torch.cat((inputs, buf_inputs))
             labels = torch.cat((labels, buf_labels))
 

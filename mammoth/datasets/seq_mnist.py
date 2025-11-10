@@ -5,17 +5,16 @@
 
 from typing import Tuple
 
+import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from backbone.MNISTMLP import MNISTMLP
-from backbone.MNISTcfc import MNISTcfc
 from PIL import Image
 from torchvision.datasets import MNIST
 
-from datasets.utils.continual_dataset import (ContinualDataset,
+from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
                                               store_masked_loaders)
-from datasets.utils.validation import get_train_val
-from utils.conf import base_path_dataset as base_path
+from utils.conf import base_path
+from datasets.utils import set_default_from_args
 
 
 class MyMNIST(MNIST):
@@ -32,8 +31,12 @@ class MyMNIST(MNIST):
     def __getitem__(self, index: int) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
-        :param index: index of the element to be returned
-        :returns: tuple: (image, target) where target is index of the target class.
+
+        Args:
+            index: index of the element to be returned
+
+        Returns:
+            tuple: (image, target) where target is index of the target class.
         """
         img, target = self.data[index], self.targets[index]
 
@@ -55,44 +58,42 @@ class MyMNIST(MNIST):
 
 
 class SequentialMNIST(ContinualDataset):
+    """The Sequential MNIST dataset.
+
+    Args:
+        NAME (str): name of the dataset.
+        SETTING (str): setting of the dataset.
+        N_CLASSES_PER_TASK (int): number of classes per task.
+        N_TASKS (int): number of tasks.
+        N_CLASSES (int): number of classes.
+        SIZE (tuple): size of the images.
+    """
 
     NAME = 'seq-mnist'
     SETTING = 'class-il'
     N_CLASSES_PER_TASK = 2
     N_TASKS = 5
+    N_CLASSES = N_CLASSES_PER_TASK * N_TASKS
+    SIZE = (28, 28)
     TRANSFORM = None
 
-    def get_data_loaders(self):
+    def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = transforms.ToTensor()
         train_dataset = MyMNIST(base_path() + 'MNIST',
                                 train=True, download=True, transform=transform)
-        if self.args.validation:
-            train_dataset, test_dataset = get_train_val(train_dataset,
-                                                        transform, self.NAME)
-        else:
-            test_dataset = MNIST(base_path() + 'MNIST',
-                                 train=False, download=True, transform=transform)
+        test_dataset = MNIST(base_path() + 'MNIST',
+                             train=False, download=True, transform=transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        # Use CfC-based backbone for continual learning experiments
-        # Can switch between NCP wiring (use_ncp_wiring=True) and fully-connected (False)
-        return MNISTcfc(28 * 28, 
-                        SequentialMNIST.N_TASKS * SequentialMNIST.N_CLASSES_PER_TASK,
-                        use_ncp_wiring=True,  # Set to False for ablation studies
-                        hidden_size=128,
-                        chunk_size=28)
-        
-        # Original MLP backbone (comment out when using CfC)
-        # return MNISTMLP(28 * 28, SequentialMNIST.N_TASKS
-        #                 * SequentialMNIST.N_CLASSES_PER_TASK)
+        return "mnistmlp"
 
     @staticmethod
     def get_transform():
-        return None
+        return SequentialMNIST.TRANSFORM
 
     @staticmethod
     def get_loss():
@@ -106,14 +107,19 @@ class SequentialMNIST(ContinualDataset):
     def get_denormalization_transform():
         return None
 
-    @staticmethod
-    def get_scheduler(model, args):
-        return None
-
-    @staticmethod
-    def get_batch_size():
+    @set_default_from_args('batch_size')
+    def get_batch_size(self):
         return 64
 
-    @staticmethod
-    def get_minibatch_size():
-        return SequentialMNIST.get_batch_size()
+    @set_default_from_args('n_epochs')
+    def get_epochs(self):
+        return 1
+
+    def get_class_names(self):
+        if self.class_names is not None:
+            return self.class_names
+        classes = MNIST(base_path() + 'MNIST', train=True, download=True).classes
+        classes = [c.split('-')[1].strip() for c in classes]
+        classes = fix_class_names_order(classes, self.args)
+        self.class_names = classes
+        return self.class_names

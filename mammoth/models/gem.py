@@ -6,31 +6,11 @@
 
 import numpy as np
 import torch
-try:
-    import quadprog
-except BaseException:
-    print('Warning: GEM and A-GEM cannot be used on Windows (quadprog required)')
+from utils.conf import warn_once
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
-from utils.buffer import Buffer
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Gradient Episodic Memory.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    # remove minibatch_size from parser
-    for i in range(len(parser._actions)):
-        if parser._actions[i].dest == 'minibatch_size':
-            del parser._actions[i]
-            break
-
-    parser.add_argument('--gamma', type=float, default=None,
-                        help='Margin parameter for GEM.')
-    return parser
+from utils.args import add_rehearsal_args, ArgumentParser
+from utils.buffer import Buffer, fill_buffer
 
 
 def store_grad(params, grads, grad_dims):
@@ -70,7 +50,7 @@ def overwrite_grad(params, newgrad, grad_dims):
         count += 1
 
 
-def project2cone2(gradient, memories, margin=0.5, eps=1e-3):
+def project2cone2(solver, gradient, memories, margin=0.5, eps=1e-3):
     """
         Solves the GEM dual QP described in the paper given a proposed
         gradient "gradient", and a memory of task gradients "memories".
@@ -88,19 +68,27 @@ def project2cone2(gradient, memories, margin=0.5, eps=1e-3):
     grad_prod = np.dot(memories_np, gradient_np) * -1
     G = np.eye(n_rows)
     h = np.zeros(n_rows) + margin
-    v = quadprog.solve_qp(self_prod, grad_prod, G, h)[0]
+    v = solver.solve_qp(self_prod, grad_prod, G, h)[0]
     x = np.dot(v, memories_np) + gradient_np
     gradient.copy_(torch.from_numpy(x).view(-1, 1))
 
 
 class Gem(ContinualModel):
+    """Continual learning via Gradient Episodic Memory."""
     NAME = 'gem'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Gem, self).__init__(backbone, loss, args, transform)
-        self.current_task = 0
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+    @staticmethod
+    def get_parser(parser) -> ArgumentParser:
+        add_rehearsal_args(parser)
+
+        parser.add_argument('--gamma', type=float, default=0.5,
+                            help='Margin parameter for GEM.')
+        return parser
+
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(Gem, self).__init__(backbone, loss, args, transform, dataset=dataset)
+        self.buffer = Buffer(self.args.buffer_size)
 
         # Allocate temporary synaptic memory
         self.grad_dims = []
@@ -110,28 +98,29 @@ class Gem(ContinualModel):
         self.grads_cs = []
         self.grads_da = torch.zeros(np.sum(self.grad_dims)).to(self.device)
 
+        try:
+            import quadprog as solver
+        except ImportError:
+            warn_once("`quadprog` not found, trying with `qpsolvers`. Note that the code is only tested with `quadprog`.")
+            try:
+                import qpsolvers as solver
+                raise Exception('QPSolvers is just a suggestion but does not work at the moment. To make it work, you need to set it up properly (and remove this exception).')
+            except ImportError:
+                raise Exception('GEM requires quadprog (linux only, python <= 3.10) or qpsolvers (cross-platform)')
+            
+        self.solver = solver
+
     def end_task(self, dataset):
-        self.current_task += 1
         self.grads_cs.append(torch.zeros(
             np.sum(self.grad_dims)).to(self.device))
 
-        # add data to the buffer
-        samples_per_task = self.args.buffer_size // dataset.N_TASKS
+        fill_buffer(self.buffer, dataset, self.current_task, required_attributes=['examples', 'labels', 'task_labels'])
 
-        loader = dataset.train_loader
-        cur_y, cur_x = next(iter(loader))[1:]
-        self.buffer.add_data(
-            examples=cur_x.to(self.device),
-            labels=cur_y.to(self.device),
-            task_labels=torch.ones(samples_per_task,
-                                   dtype=torch.long).to(self.device) * (self.current_task - 1)
-        )
-
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         if not self.buffer.is_empty():
             buf_inputs, buf_labels, buf_task_labels = self.buffer.get_data(
-                self.args.buffer_size, transform=self.transform)
+                self.args.buffer_size, transform=self.transform, device=self.device)
 
             for tt in buf_task_labels.unique():
                 # compute gradient on the memory buffer
@@ -157,7 +146,7 @@ class Gem(ContinualModel):
             dot_prod = torch.mm(self.grads_da.unsqueeze(0),
                                 torch.stack(self.grads_cs).T)
             if (dot_prod < 0).sum() != 0:
-                project2cone2(self.grads_da.unsqueeze(1),
+                project2cone2(self.solver, self.grads_da.unsqueeze(1),
                               torch.stack(self.grads_cs).T, margin=self.args.gamma)
                 # copy gradients back
                 overwrite_grad(self.parameters, self.grads_da,

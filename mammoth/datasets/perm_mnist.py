@@ -3,40 +3,19 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Tuple, Type
+from typing import Tuple
 
+import numpy as np
+import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from backbone.MNISTMLP import MNISTMLP
-from backbone.MNISTcfc import MNISTcfc
 from PIL import Image
-from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST
 
 from datasets.transforms.permutation import Permutation
-from datasets.utils.continual_dataset import ContinualDataset
-from datasets.utils.validation import get_train_val
-from utils.conf import base_path_dataset as base_path
-
-
-def store_mnist_loaders(transform, setting):
-    train_dataset = MyMNIST(base_path() + 'MNIST',
-                            train=True, download=True, transform=transform)
-    if setting.args.validation:
-        train_dataset, test_dataset = get_train_val(train_dataset,
-                                                    transform, setting.NAME)
-    else:
-        test_dataset = MNIST(base_path() + 'MNIST',
-                             train=False, download=True, transform=transform)
-
-    train_loader = DataLoader(train_dataset,
-                              batch_size=setting.args.batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset,
-                             batch_size=setting.args.batch_size, shuffle=False)
-    setting.test_loaders.append(test_loader)
-    setting.train_loader = train_loader
-
-    return train_loader, test_loader
+from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
+from utils.conf import base_path
+from datasets.utils import set_default_from_args
 
 
 class MyMNIST(MNIST):
@@ -52,8 +31,12 @@ class MyMNIST(MNIST):
     def __getitem__(self, index: int) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
-        :param index: index of the element to be returned
-        :returns: tuple: (image, target) where target is index of the target class.
+
+        Args:
+            index: index of the element to be returned
+
+        Returns:
+            tuple: (image, target) where target is index of the target class.
         """
         img, target = self.data[index], int(self.targets[index])
 
@@ -71,23 +54,39 @@ class MyMNIST(MNIST):
 
 
 class PermutedMNIST(ContinualDataset):
+    """Permuted MNIST Dataset.
+
+    Creates a dataset composed by a sequence of tasks, each containing a
+    different permutation of the pixels of the MNIST dataset.
+
+    Args:
+        NAME (str): name of the dataset
+        SETTING (str): setting of the experiment
+        N_CLASSES_PER_TASK (int): number of classes in each task
+        N_TASKS (int): number of tasks
+        SIZE (tuple): size of the images
+    """
 
     NAME = 'perm-mnist'
     SETTING = 'domain-il'
     N_CLASSES_PER_TASK = 10
     N_TASKS = 20
+    SIZE = (28, 28)
 
-    def get_data_loaders(self):
-        transform = transforms.Compose((transforms.ToTensor(), Permutation()))
-        train, test = store_mnist_loaders(transform, self)
+    def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
+        transform = transforms.Compose((transforms.ToTensor(), Permutation(np.prod(PermutedMNIST.SIZE))))
+
+        train_dataset = MyMNIST(base_path() + 'MNIST',
+                                train=True, download=True, transform=transform)
+        test_dataset = MNIST(base_path() + 'MNIST',
+                             train=False, download=True, transform=transform)
+
+        train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        # Using MNISTcfc with NCP wiring for temporal processing
-        return MNISTcfc(28 * 28, PermutedMNIST.N_CLASSES_PER_TASK, use_ncp_wiring=True, hidden_size=128)
-        # Original baseline:
-        # return MNISTMLP(28 * 28, PermutedMNIST.N_CLASSES_PER_TASK)
+        return "mnistmlp"
 
     @staticmethod
     def get_transform():
@@ -105,14 +104,19 @@ class PermutedMNIST(ContinualDataset):
     def get_loss():
         return F.cross_entropy
 
-    @staticmethod
-    def get_scheduler(model, args):
-        return None
-
-    @staticmethod
-    def get_batch_size() -> int:
+    @set_default_from_args('batch_size')
+    def get_batch_size(self) -> int:
         return 128
 
-    @staticmethod
-    def get_minibatch_size() -> int:
-        return PermutedMNIST.get_batch_size()
+    @set_default_from_args('n_epochs')
+    def get_epochs(self):
+        return 1
+
+    def get_class_names(self):
+        if self.class_names is not None:
+            return self.class_names
+        classes = MNIST(base_path() + 'MNIST', train=True, download=True).classes
+        classes = [c.split('-')[1].strip() for c in classes]
+        classes = fix_class_names_order(classes, self.args)
+        self.class_names = classes
+        return self.class_names

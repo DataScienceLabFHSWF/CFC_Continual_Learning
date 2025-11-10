@@ -5,29 +5,32 @@
 
 import torch
 import torch.nn as nn
+import logging
 
-from backbone import MammothBackbone, num_flat_features, xavier
+from backbone import MammothBackbone, num_flat_features, register_backbone, xavier
 
 
-class MNISTMLP(MammothBackbone):
+class BaseMNISTMLP(MammothBackbone):
     """
     Network composed of two hidden layers, each containing 100 ReLU activations.
     Designed for the MNIST dataset.
     """
 
-    def __init__(self, input_size: int, output_size: int) -> None:
+    def __init__(self, input_size: int, output_size: int, hidden_size=100) -> None:
         """
         Instantiates the layers of the network.
-        :param input_size: the size of the input data
-        :param output_size: the size of the output
+
+        Args:
+            input_size: the size of the input data
+            output_size: the size of the output
         """
-        super(MNISTMLP, self).__init__()
+        super(BaseMNISTMLP, self).__init__()
 
         self.input_size = input_size
         self.output_size = output_size
 
-        self.fc1 = nn.Linear(self.input_size, 100)
-        self.fc2 = nn.Linear(100, 100)
+        self.fc1 = nn.Linear(self.input_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
 
         self._features = nn.Sequential(
             self.fc1,
@@ -35,7 +38,7 @@ class MNISTMLP(MammothBackbone):
             self.fc2,
             nn.ReLU(),
         )
-        self.classifier = nn.Linear(100, self.output_size)
+        self.classifier = nn.Linear(hidden_size, self.output_size)
         self.net = nn.Sequential(self._features, self.classifier)
         self.reset_parameters()
 
@@ -48,8 +51,12 @@ class MNISTMLP(MammothBackbone):
     def forward(self, x: torch.Tensor, returnt='out') -> torch.Tensor:
         """
         Compute a forward pass.
-        :param x: input tensor (batch_size, input_size)
-        :return: output tensor (output_size)
+
+        Args:
+            x: input tensor (batch_size, input_size)
+
+        Returns:
+            output tensor (output_size)
         """
         x = x.view(-1, num_flat_features(x))
 
@@ -62,7 +69,14 @@ class MNISTMLP(MammothBackbone):
 
         if returnt == 'out':
             return out
-        elif returnt == 'all':
+        elif returnt == 'full':
             return (out, feats)
 
         raise NotImplementedError("Unknown return type")
+
+
+@register_backbone("mnistmlp")
+def mnistmlp(num_classes: int, mlp_hidden_size: int = 100) -> BaseMNISTMLP:
+    if mlp_hidden_size != 100:
+        logging.debug(f"hidden size is set to `{mlp_hidden_size}` instead of the default `100`")
+    return BaseMNISTMLP(28 * 28, num_classes, hidden_size=mlp_hidden_size)

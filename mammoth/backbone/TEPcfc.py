@@ -4,19 +4,12 @@
 import torch
 import torch.nn as nn
 
-try:
-    from ncps.torch import CfC
-    from ncps.wirings import AutoNCP, FullyConnected
-    NCPS_AVAILABLE = True
-except (ImportError, AttributeError) as e:
-    print(f"Warning: Could not import ncps: {e}")
-    NCPS_AVAILABLE = False
-    CfC = None
-    AutoNCP = None
-    FullyConnected = None
+from backbone import MammothBackbone, register_backbone
+from ncps.torch import CfC
+from ncps.wirings import AutoNCP, FullyConnected
 
 
-class TEPCfC(nn.Module):
+class BaseTEPCfC(MammothBackbone):
     """
     CfC network for Tennessee Eastman Process fault detection.
     
@@ -183,3 +176,15 @@ class TEPLSTM(nn.Module):
     
     def get_params(self):
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
+
+
+@register_backbone('tepcfc')
+def tepcfc(input_size: int, output_size: int, **kwargs):
+    """CfC backbone for Tennessee Eastman Process fault detection."""
+    return BaseTEPCfC(input_size=input_size, num_classes=output_size, **kwargs)
+
+
+@register_backbone('teplstm')
+def teplstm(input_size: int, output_size: int, **kwargs):
+    """LSTM baseline for Tennessee Eastman Process."""
+    return TEPLSTM(input_size=input_size, num_classes=output_size, **kwargs)

@@ -3,30 +3,15 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import List
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.nn.functional import avg_pool2d, relu
-
-from backbone import MammothBackbone
-from ncps.torch import CfC
-
-# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
-# All rights reserved.
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
 import torch
 import torch.nn as nn
 
-from backbone import MammothBackbone, num_flat_features, xavier
+from backbone import MammothBackbone, num_flat_features, register_backbone, xavier
 from ncps.torch import CfC
 from ncps.wirings import AutoNCP
 
 
-class MNISTcfc(MammothBackbone):
+class BaseMNISTcfc(MammothBackbone):
     """
     Network using CfC (Closed-form Continuous-time) RNN for MNIST.
     
@@ -157,3 +142,9 @@ class MNISTcfc(MammothBackbone):
             return (out, feats)
 
         raise NotImplementedError("Unknown return type")
+
+
+@register_backbone('mnistcfc')
+def mnistcfc(input_size: int, output_size: int, **kwargs):
+    """CfC backbone for MNIST with AutoNCP wiring."""
+    return BaseMNISTcfc(input_size, output_size, **kwargs)

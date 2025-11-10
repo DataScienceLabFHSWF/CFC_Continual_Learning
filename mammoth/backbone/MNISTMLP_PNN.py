@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from backbone import MammothBackbone, num_flat_features, xavier
+from backbone import MammothBackbone, num_flat_features, register_backbone, xavier
 from backbone.utils.modules import AlphaModule, ListModule
 
 
@@ -23,9 +23,11 @@ class MNISTMLP_PNN(MammothBackbone):
                  old_cols: List[AlphaModule] = None) -> None:
         """
         Instantiates the layers of the network.
-        :param input_size: the size of the input data
-        :param output_size: the size of the output
-        :param old_cols: a list of all the old columns
+
+        Args:
+            input_size: the size of the input data
+            output_size: the size of the output
+            old_cols: a list of all the old columns
         """
         super(MNISTMLP_PNN, self).__init__()
 
@@ -84,8 +86,12 @@ class MNISTMLP_PNN(MammothBackbone):
     def forward(self, x: torch.Tensor, returnt='out') -> torch.Tensor:
         """
         Compute a forward pass.
-        :param x: input tensor (batch_size, input_size)
-        :return: output tensor (output_size)
+
+        Args:
+            x: input tensor (batch_size, input_size)
+
+        Retruns:
+            output tensor (output_size)
         """
         x = x.view(-1, num_flat_features(x))
         if len(self.old_cols) > 0:
@@ -107,3 +113,8 @@ class MNISTMLP_PNN(MammothBackbone):
             return x
 
         raise NotImplementedError("Unknown return type")
+
+@register_backbone("mnistmlp_pnn")
+def mnistmlp_pnn(num_classes: int, input_size: int,
+                 old_cols: List[AlphaModule] = None) -> MNISTMLP_PNN:
+    return MNISTMLP_PNN(input_size, num_classes, old_cols)

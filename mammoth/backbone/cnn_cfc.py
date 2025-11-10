@@ -4,13 +4,11 @@
 # LICENSE file in the root directory of this source tree.
 
 from typing import List
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.functional import avg_pool2d, relu
 
-from backbone import MammothBackbone
+from backbone import MammothBackbone, register_backbone
 from ncps.torch import CfC
 
 def conv3x3(in_planes: int, out_planes: int, stride: int=1) -> F.conv2d:
@@ -227,9 +225,15 @@ class ResNet(MammothBackbone):
 
 def CFCresnet18(nclasses: int, nf: int=64) -> ResNet:
     """
-    Instantiates a ResNet18 network.
+    Instantiates a ResNet18 network with CfC.
     :param nclasses: number of output classes
     :param nf: number of filters
     :return: ResNet network
     """
     return ResNet(BasicBlock, [2, 2, 2, 2], nclasses, nf)
+
+
+@register_backbone('cnn-cfc')
+def cnn_cfc(output_size: int, nf: int=64, **kwargs):
+    """ResNet18 + CfC backbone for CIFAR-style datasets."""
+    return CFCresnet18(output_size, nf)

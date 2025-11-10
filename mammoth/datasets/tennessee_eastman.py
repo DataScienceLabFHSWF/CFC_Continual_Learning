@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
-from backbone.MNISTcfc import MNISTcfc
+from backbone.TEPcfc import BaseTEPCfC
 from datasets.utils.continual_dataset import ContinualDataset
 from utils.conf import base_path_dataset as base_path
 
