@@ -40,7 +40,7 @@ class BaseMNISTcfc(MammothBackbone):
         :param hidden_size: size of the hidden state in CfC
         :param chunk_size: size of chunks to split input into (28 for MNIST rows)
         """
-        super(MNISTcfc, self).__init__()
+        super(BaseMNISTcfc, self).__init__()
 
         self.input_size = input_size
         self.output_size = output_size
@@ -145,6 +145,8 @@ class BaseMNISTcfc(MammothBackbone):
 
 
 @register_backbone('mnistcfc')
-def mnistcfc(input_size: int, output_size: int, **kwargs):
+def mnistcfc(input_size: int = 784, output_size: int = 10, 
+             hidden_size: int = 256, chunk_size: int = 28, use_ncp_wiring: bool = True):
     """CfC backbone for MNIST with AutoNCP wiring."""
-    return BaseMNISTcfc(input_size, output_size, **kwargs)
+    return BaseMNISTcfc(input_size, output_size, hidden_size=hidden_size, 
+                        chunk_size=chunk_size, use_ncp_wiring=use_ncp_wiring)

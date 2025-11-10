@@ -234,6 +234,6 @@ def CFCresnet18(nclasses: int, nf: int=64) -> ResNet:
 
 
 @register_backbone('cnn-cfc')
-def cnn_cfc(output_size: int, nf: int=64, **kwargs):
-    """ResNet18 + CfC backbone for CIFAR-style datasets."""
-    return CFCresnet18(output_size, nf)
+def cnn_cfc(num_classes: int, nf: int = 64, use_cfc: bool = True, cfc_hidden_size: int = 256):
+    """ResNet18 with CfC temporal processing."""
+    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes, nf, use_cfc=use_cfc, cfc_hidden_size=cfc_hidden_size)

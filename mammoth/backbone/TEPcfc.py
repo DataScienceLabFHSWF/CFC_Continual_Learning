@@ -66,17 +66,18 @@ class BaseTEPCfC(MammothBackbone):
         # Hidden state (persistent across batches for continual learning)
         self.hidden_state = None
         
-    def forward(self, x, return_features=False):
+    def forward(self, x, returnt='out'):
         """
         Forward pass through TEP-CfC network.
         
         Args:
             x: Input tensor of shape (batch, seq_len, input_size) or (batch, input_size)
-            return_features: If True, return intermediate features
+            returnt: What to return - 'out', 'features', 'both', or 'all'
             
         Returns:
-            logits: (batch, num_classes)
-            features: (batch, hidden_size) if return_features=True
+            - If returnt='out': logits
+            - If returnt='features': last hidden state
+            - If returnt='both' or 'all': tuple (logits, features)
         """
         batch_size = x.size(0)
         
@@ -105,12 +106,17 @@ class BaseTEPCfC(MammothBackbone):
         # Final linear layer
         logits = self.output_layer(last_output)  # (batch, num_classes)
         
-        if return_features:
+        if returnt == 'out':
+            return logits
+        elif returnt == 'features':
             # Return hidden state as features
             features = self.hidden_state
+            return features
+        elif returnt in ['both', 'all']:
+            features = self.hidden_state
             return logits, features
-        
-        return logits
+        else:
+            raise ValueError(f"Unknown returnt value: {returnt}")
     
     def reset_hidden(self):
         """Reset hidden state (call between tasks in continual learning)."""
@@ -152,7 +158,7 @@ class TEPLSTM(nn.Module):
         self.output_layer = nn.Linear(hidden_size, num_classes)
         self.hidden_state = None
         
-    def forward(self, x, return_features=False):
+    def forward(self, x, returnt='out'):
         batch_size = x.size(0)
         
         if x.dim() == 2:
@@ -166,10 +172,14 @@ class TEPLSTM(nn.Module):
         last_output = output[:, -1, :]
         logits = self.output_layer(last_output)
         
-        if return_features:
+        if returnt == 'out':
+            return logits
+        elif returnt == 'features':
+            return last_output
+        elif returnt in ['both', 'all']:
             return logits, last_output
-        
-        return logits
+        else:
+            raise ValueError(f"Unknown returnt value: {returnt}")
     
     def reset_hidden(self):
         self.hidden_state = None
@@ -179,12 +189,13 @@ class TEPLSTM(nn.Module):
 
 
 @register_backbone('tepcfc')
-def tepcfc(input_size: int, output_size: int, **kwargs):
+def tepcfc(num_features: int = 52, num_classes: int = 22, hidden_size: int = 256, use_ncp_wiring: bool = True):
     """CfC backbone for Tennessee Eastman Process fault detection."""
-    return BaseTEPCfC(input_size=input_size, num_classes=output_size, **kwargs)
+    return BaseTEPCfC(num_features=num_features, num_classes=num_classes, 
+                      hidden_size=hidden_size, use_ncp_wiring=use_ncp_wiring)
 
 
 @register_backbone('teplstm')
-def teplstm(input_size: int, output_size: int, **kwargs):
+def teplstm(num_features: int = 52, num_classes: int = 22, hidden_size: int = 256):
     """LSTM baseline for Tennessee Eastman Process."""
-    return TEPLSTM(input_size=input_size, num_classes=output_size, **kwargs)
+    return TEPLSTM(num_features=num_features, num_classes=num_classes, hidden_size=hidden_size)

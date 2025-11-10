@@ -9,7 +9,8 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from backbone.TEPcfc import BaseTEPCfC
 from datasets.utils.continual_dataset import ContinualDataset
-from utils.conf import base_path_dataset as base_path
+from datasets.utils import set_default_from_args
+from utils.conf import base_path
 
 
 class TennesseeEastmanDataset(Dataset):
@@ -178,6 +179,7 @@ class TennesseeEastmanContinual(ContinualDataset):
         return train_loader, test_loader
     
     @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
         """
         Return CfC backbone for TEP.
@@ -185,18 +187,7 @@ class TennesseeEastmanContinual(ContinualDataset):
         Input: (window_size, 52) - sequence of 52 process variables
         Output: 22 classes (normal + 21 faults)
         """
-        # TEP has 52 variables, we process as sequence
-        # Input will be (batch, window_size, 52)
-        # CfC expects (batch, seq_len, features)
-        num_features = 52
-        num_classes = 22  # Normal + 21 faults
-        
-        return MNISTcfc(
-            num_features * 1,  # Will reshape in forward pass
-            num_classes,
-            use_ncp_wiring=True,
-            hidden_size=128
-        )
+        return "tepcfc"
     
     @staticmethod
     def get_transform():
@@ -281,8 +272,9 @@ class TennesseeEastmanJoint(ContinualDataset):
         return train_loader, test_loader
     
     @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return TennesseeEastmanContinual.get_backbone()
+        return "tepcfc"
     
     @staticmethod
     def get_transform():
