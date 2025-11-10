@@ -5,27 +5,49 @@
 
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from backbone.MNISTMLP import MNISTMLP
 
-from datasets.perm_mnist import store_mnist_loaders
+from datasets.perm_mnist import MyMNIST, MNIST
 from datasets.transforms.rotation import Rotation
-from datasets.utils.continual_dataset import ContinualDataset
+from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
+from utils.conf import base_path
+from datasets.utils import set_default_from_args
+from torchvision.datasets import MNIST
 
 
 class RotatedMNIST(ContinualDataset):
+    """
+    The Rotated MNIST dataset.
+
+    Args:
+        NAME (str): name of the dataset.
+        SETTING (str): setting of the dataset.
+        N_CLASSES_PER_TASK (int): number of classes per task.
+        N_TASKS (int): number of tasks.
+        N_CLASSES (int): number of classes.
+        SIZE (tuple): size of the images.
+    """
+
     NAME = 'rot-mnist'
     SETTING = 'domain-il'
     N_CLASSES_PER_TASK = 10
     N_TASKS = 20
+    N_CLASSES = N_CLASSES_PER_TASK * N_TASKS
+    SIZE = (28, 28)
 
     def get_data_loaders(self):
         transform = transforms.Compose((Rotation(), transforms.ToTensor()))
-        train, test = store_mnist_loaders(transform, self)
+
+        train_dataset = MyMNIST(base_path() + 'MNIST',
+                                train=True, download=True, transform=transform)
+        test_dataset = MNIST(base_path() + 'MNIST',
+                             train=False, download=True, transform=transform)
+
+        train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return MNISTMLP(28 * 28, RotatedMNIST.N_CLASSES_PER_TASK)
+        return "mnistmlp"
 
     @staticmethod
     def get_transform():
@@ -43,14 +65,19 @@ class RotatedMNIST(ContinualDataset):
     def get_denormalization_transform():
         return None
 
-    @staticmethod
-    def get_scheduler(model, args):
-        return None
-
-    @staticmethod
-    def get_batch_size() -> int:
+    @set_default_from_args('batch_size')
+    def get_batch_size(self) -> int:
         return 128
 
-    @staticmethod
-    def get_minibatch_size() -> int:
-        return RotatedMNIST.get_batch_size()
+    @set_default_from_args('n_epochs')
+    def get_epochs(self):
+        return 1
+
+    def get_class_names(self):
+        if self.class_names is not None:
+            return self.class_names
+        classes = MNIST(base_path() + 'MNIST', train=True, download=True).classes
+        classes = [c.split('-')[1].strip() for c in classes]
+        classes = fix_class_names_order(classes, self.args)
+        self.class_names = classes
+        return self.class_names

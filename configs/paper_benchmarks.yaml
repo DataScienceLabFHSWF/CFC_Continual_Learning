@@ -1,0 +1,271 @@
+# ============================================================================
+# CfC Continual Learning - Paper Benchmark Configuration
+# ============================================================================
+# This configuration runs comprehensive experiments comparing CfC backbones
+# against standard MLPs across multiple continual learning strategies.
+#
+# Datasets: MNIST, CIFAR-10, Tennessee Eastman Process (TEP)
+# Backbones: mnistmlp (baseline), mnistcfc (CfC), cnn-cfc, tepcfc, teplstm
+# Models: SGD, Joint, ER, DER++, ER-ACE, A-GEM, GEM, EWC, SI, LwF
+# Seeds: 3 runs per configuration for statistical significance
+# ============================================================================
+
+# Common settings
+common:
+  num_workers: 4
+  seed_range: [0, 1, 2]  # 3 seeds for error bars
+  
+# ============================================================================
+# MNIST Benchmarks (Quick iterations, 5 tasks)
+# ============================================================================
+mnist:
+  dataset: seq-mnist
+  n_epochs: 10
+  batch_size: 32
+  
+  # Baselines for comparison
+  baselines:
+    # Standard MLP backbone
+    - backbone: mnistmlp
+      models:
+        # No continual learning (catastrophic forgetting baseline)
+        - name: sgd
+          lr: 0.03
+          
+        # Upper bound (train on all data)
+        - name: joint
+          lr: 0.03
+          
+        # Replay-based methods
+        - name: er
+          lr: 0.03
+          buffer_size: [200, 500]
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: [200, 500]
+          alpha: 0.1
+          beta: 0.5
+          
+        - name: er_ace
+          lr: 0.03
+          buffer_size: [200, 500]
+          
+        - name: agem
+          lr: 0.03
+          buffer_size: 200
+          
+        - name: gem
+          lr: 0.1
+          buffer_size: 200
+          gamma: 0.5
+          
+        # Regularization-based methods
+        - name: ewc_on
+          lr: 0.1
+          e_lambda: 0.7
+          gamma: 1.0
+          
+        - name: si
+          lr: 0.1
+          c: 0.5
+          xi: 1.0
+          
+        - name: lwf
+          lr: 0.03
+          alpha: 1.0
+          softmax_temp: 2.0
+  
+  # CfC backbone experiments
+  cfc:
+    - backbone: mnistcfc
+      models:
+        # Same models as baseline for fair comparison
+        - name: sgd
+          lr: 0.03
+          
+        - name: joint
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: [200, 500]
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: [200, 500]
+          alpha: 0.1
+          beta: 0.5
+          
+        - name: er_ace
+          lr: 0.03
+          buffer_size: [200, 500]
+          
+        - name: agem
+          lr: 0.03
+          buffer_size: 200
+          
+        - name: ewc_on
+          lr: 0.1
+          e_lambda: 0.7
+          gamma: 1.0
+          
+        - name: si
+          lr: 0.1
+          c: 0.5
+          xi: 1.0
+
+# ============================================================================
+# CIFAR-10 Benchmarks (Standard vision benchmark, 5 tasks)
+# ============================================================================
+cifar10:
+  dataset: seq-cifar10
+  n_epochs: 50
+  batch_size: 32
+  
+  baselines:
+    # Standard CNN backbone (ResNet-18 is default for CIFAR in Mammoth)
+    - backbone: resnet18
+      models:
+        - name: sgd
+          lr: 0.1
+          
+        - name: joint
+          lr: 0.1
+          
+        - name: er
+          lr: 0.1
+          buffer_size: [200, 500, 1000]
+          
+        - name: derpp
+          lr: 0.1
+          buffer_size: [200, 500, 1000]
+          alpha: 0.2
+          beta: 0.5
+          
+        - name: er_ace
+          lr: 0.1
+          buffer_size: [200, 500, 1000]
+          
+        - name: ewc_on
+          lr: 0.03
+          e_lambda: 1.0
+          gamma: 1.0
+          
+        - name: si
+          lr: 0.03
+          c: 1.0
+          xi: 1.0
+  
+  # CfC CNN experiments
+  cfc:
+    - backbone: cnn-cfc
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: joint
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: [200, 500, 1000]
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: [200, 500, 1000]
+          alpha: 0.1
+          beta: 0.5
+          
+        - name: er_ace
+          lr: 0.03
+          buffer_size: [200, 500, 1000]
+          
+        - name: ewc_on
+          lr: 0.01
+          e_lambda: 0.7
+          gamma: 1.0
+
+# ============================================================================
+# Tennessee Eastman Process Benchmarks (Industrial dataset, 22 tasks)
+# ============================================================================
+tep:
+  dataset: tennessee-eastman
+  n_epochs: 20
+  batch_size: 32
+  
+  # CfC and LSTM baselines for temporal data
+  models:
+    # CfC backbone
+    - backbone: tepcfc
+      experiments:
+        - name: sgd
+          lr: 0.001
+          
+        - name: er
+          lr: 0.001
+          buffer_size: [200, 500, 1000]
+          
+        - name: derpp
+          lr: 0.001
+          buffer_size: [200, 500, 1000]
+          alpha: 0.1
+          beta: 0.5
+          
+        - name: ewc_on
+          lr: 0.001
+          e_lambda: 0.5
+          gamma: 1.0
+    
+    # LSTM baseline
+    - backbone: teplstm
+      experiments:
+        - name: sgd
+          lr: 0.001
+          
+        - name: er
+          lr: 0.001
+          buffer_size: [200, 500, 1000]
+          
+        - name: derpp
+          lr: 0.001
+          buffer_size: [200, 500, 1000]
+          alpha: 0.1
+          beta: 0.5
+          
+        - name: ewc_on
+          lr: 0.001
+          e_lambda: 0.5
+          gamma: 1.0
+
+# ============================================================================
+# Execution Configuration
+# ============================================================================
+execution:
+  # Parallel execution settings
+  max_parallel: 4  # Maximum concurrent experiments
+  gpu_allocation: auto  # Auto-assign GPUs
+  
+  # Results organization
+  results_dir: paper_results
+  checkpoint_dir: paper_checkpoints
+  
+  # Logging
+  wandb:
+    enabled: false  # Set to true if using W&B
+    project: cfc-continual-learning
+    entity: your-entity
+  
+  csv_log: true
+  tensorboard: false
+
+# ============================================================================
+# Expected Runtime (single GPU)
+# ============================================================================
+# MNIST experiments: ~2-3 hours per configuration
+# CIFAR-10 experiments: ~8-12 hours per configuration  
+# TEP experiments: ~4-6 hours per configuration
+#
+# Total runtime (sequential): ~200-300 hours
+# With 4 GPUs parallel: ~50-75 hours
+# ============================================================================

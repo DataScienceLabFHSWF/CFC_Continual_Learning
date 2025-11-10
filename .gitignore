@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+ENV/
+
+# Secrets
+.secrets.json
+*.key
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data
+data/
+tmp/
+/tmp/mammoth_datasets/
+
+# Logs and Results
+wandb/
+*.log
+results/*.json
+results/*.csv
+results/*.png
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Poetry (keeping for reference but not using)
+poetry.lock
+
+# Dev docs (not for publication)
+SCIENTIFIC_IMPROVEMENT_PLAN.md
+SUMMARY.md
+# Results and checkpoints
+paper_results/
+results/validation/
+results/benchmarks/
+results/checkpoints/
+*.csv
+*.log
+
+# Wandb
+wandb/
+.wandb/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Environment
+.venv/
+venv/
+
+# Secrets
+.secrets.json
+
+# Data
+data/
+*.npy
+*.pkl

@@ -1,0 +1,77 @@
+# Validation Test - 1 epoch per backbone
+# Quick check that all backbones work before running long experiments
+# Only tests compatible backbone-dataset pairs
+
+python_cmd: python
+venv_path: ../.venv/bin/activate
+base_path: ./mammoth
+
+# Use both GPUs for parallel testing (round-robin assignment)
+gpus:
+  - 0
+  - 1
+  - 0
+  - 1
+  - 0
+  - 1
+  - 0
+  - 1
+
+# Minimal global args - just 1 epoch for speed
+global_args:
+  n_epochs: 1
+  batch_size: 32
+  num_workers: 0
+
+# Test MNIST with MNIST backbone
+datasets:
+  - seq-mnist
+
+models:
+  - er
+
+backbones:
+  - mnistcfc  # Only MNIST-compatible backbone for MNIST
+
+seeds:
+  - 0
+
+model_args:
+  er:
+    buffer_size: 200
+
+backbone_args:
+  mnistcfc:
+    input_size: 784
+    output_size: 10
+    hidden_size: 128
+    use_ncp_wiring: 1
+    chunk_size: 28
+
+dataset_args:
+  seq-mnist:
+    lr: 0.03
+
+# Skip traditional ML for validation - just test neural networks
+# traditional_ml:
+#   models:
+#     - xgboost
+#     - lightgbm
+#   
+#   datasets:
+#     - tennessee-eastman  # Correct dataset name
+#   
+#   seeds:
+#     - 0
+#   
+#   args:
+#     output_dir: validation_ml_results
+#   
+#   model_args:
+#     xgboost:
+#       n_estimators: 10  # Very small for speed
+#       max_depth: 3
+#     
+#     lightgbm:
+#       n_estimators: 10  # Very small for speed
+#       max_depth: 3

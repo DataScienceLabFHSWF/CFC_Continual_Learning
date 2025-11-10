@@ -1,0 +1,44 @@
+# Full Validation Test - Test all backbones with their correct datasets
+# Creates 3 separate validation configs for proper backbone-dataset pairing
+
+python_cmd: python
+venv_path: ../.venv/bin/activate
+base_path: ./mammoth
+
+gpus:
+  - 0
+  - 1
+
+global_args:
+  n_epochs: 1
+  batch_size: 32
+  num_workers: 0
+
+models:
+  - er
+
+seeds:
+  - 0
+
+model_args:
+  er:
+    buffer_size: 200
+
+# MNIST validation
+datasets:
+  - seq-mnist
+
+backbones:
+  - mnistcfc
+
+backbone_args:
+  mnistcfc:
+    input_size: 784
+    output_size: 10
+    hidden_size: 128
+    use_ncp_wiring: 1
+    chunk_size: 28
+
+dataset_args:
+  seq-mnist:
+    lr: 0.03

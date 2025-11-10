@@ -4,23 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-from datasets import get_dataset
 from torch.optim import SGD
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Learning without Forgetting.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    parser.add_argument('--alpha', type=float, default=0.5,
-                        help='Penalty weight.')
-    parser.add_argument('--softmax_temp', type=float, default=2,
-                        help='Temperature of the softmax function.')
-    return parser
+from utils.args import ArgumentParser
 
 
 def smooth(logits, temp, dim):
@@ -33,19 +20,23 @@ def modified_kl_div(old, new):
 
 
 class Lwf(ContinualModel):
+    """Continual learning via Learning without Forgetting."""
     NAME = 'lwf'
     COMPATIBILITY = ['class-il', 'task-il']
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Lwf, self).__init__(backbone, loss, args, transform)
+    @staticmethod
+    def get_parser(parser) -> ArgumentParser:
+        parser.add_argument('--alpha', type=float, default=0.5,
+                            help='Penalty weight.')
+        parser.add_argument('--softmax_temp', type=float, default=2,
+                            help='Temperature of the softmax function.')
+        return parser
+
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(Lwf, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.old_net = None
         self.soft = torch.nn.Softmax(dim=1)
         self.logsoft = torch.nn.LogSoftmax(dim=1)
-        self.dataset = get_dataset(args)
-        self.current_task = 0
-        self.cpt = get_dataset(args).N_CLASSES_PER_TASK
-        nc = get_dataset(args).N_TASKS * self.cpt
-        self.eye = torch.tril(torch.ones((nc, nc))).bool().to(self.device)
 
     def begin_task(self, dataset):
         self.net.eval()
@@ -54,14 +45,13 @@ class Lwf(ContinualModel):
             opt = SGD(self.net.classifier.parameters(), lr=self.args.lr)
             for epoch in range(self.args.n_epochs):
                 for i, data in enumerate(dataset.train_loader):
-                    inputs, labels, not_aug_inputs = data
+                    inputs, labels = data[0], data[1]
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
                     opt.zero_grad()
                     with torch.no_grad():
                         feats = self.net(inputs, returnt='features')
-                    mask = self.eye[(self.current_task + 1) * self.cpt - 1] ^ self.eye[self.current_task * self.cpt - 1]
-                    outputs = self.net.classifier(feats)[:, mask]
-                    loss = self.loss(outputs, labels - self.current_task * self.cpt)
+                    outputs = self.net.classifier(feats)[:, self.n_past_classes: self.n_seen_classes]
+                    loss = self.loss(outputs, labels - self.n_past_classes)
                     loss.backward()
                     opt.step()
 
@@ -73,21 +63,18 @@ class Lwf(ContinualModel):
                                                          len(dataset.train_loader.dataset)))])
                     log = self.net(inputs.to(self.device)).cpu()
                     logits.append(log)
-            setattr(dataset.train_loader.dataset, 'logits', torch.cat(logits))
+            dataset.train_loader.dataset.logits = torch.cat(logits)
+            dataset.train_loader.dataset.extra_return_fields += ('logits',)
         self.net.train()
 
-        self.current_task += 1
-
-    def observe(self, inputs, labels, not_aug_inputs, logits=None):
+    def observe(self, inputs, labels, not_aug_inputs, logits=None, epoch=None):
         self.opt.zero_grad()
         outputs = self.net(inputs)
 
-        mask = self.eye[self.current_task * self.cpt - 1]
-        loss = self.loss(outputs[:, mask], labels)
+        loss = self.loss(outputs[:, :self.n_seen_classes], labels)
         if logits is not None:
-            mask = self.eye[(self.current_task - 1) * self.cpt - 1]
-            loss += self.args.alpha * modified_kl_div(smooth(self.soft(logits[:, mask]).to(self.device), 2, 1),
-                                                      smooth(self.soft(outputs[:, mask]), 2, 1))
+            loss += self.args.alpha * modified_kl_div(smooth(self.soft(logits[:, :self.n_past_classes]).to(self.device), self.args.softmax_temp, 1),
+                                                      smooth(self.soft(outputs[:, :self.n_past_classes]), self.args.softmax_temp, 1))
 
         loss.backward()
         self.opt.step()

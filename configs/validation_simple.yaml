@@ -1,0 +1,67 @@
+# Simple Validation Test - Test one compatible pair per backbone type
+# This tests: MNIST+mnistcfc, CIFAR+cnn-cfc, TEP+tepcfc
+
+python_cmd: python
+venv_path: ../.venv/bin/activate
+base_path: ./mammoth
+
+gpus:
+  - 0
+  - 1
+
+global_args:
+  n_epochs: 1
+  batch_size: 32
+  num_workers: 0
+
+# Test 1: MNIST with mnistcfc
+datasets:
+  - seq-mnist
+  - seq-cifar10
+  - tennessee-eastman
+
+models:
+  - er
+
+# One backbone per dataset type
+backbones:
+  - mnistcfc
+  - cnn-cfc
+  - tepcfc
+
+seeds:
+  - 0
+
+model_args:
+  er:
+    buffer_size: 200
+
+# Backbone configs
+backbone_args:
+  mnistcfc:
+    input_size: 784
+    output_size: 10
+    hidden_size: 128
+    use_ncp_wiring: 1
+    chunk_size: 28
+  
+  cnn-cfc:
+    hidden_size: 128
+    use_ncp_wiring: 1
+  
+  tepcfc:
+    input_size: 52
+    output_size: 21
+    hidden_size: 64
+    use_ncp_wiring: 1
+
+# Dataset configs
+dataset_args:
+  seq-mnist:
+    lr: 0.03
+  
+  seq-cifar10:
+    lr: 0.01
+  
+  tennessee-eastman:
+    lr: 0.001
