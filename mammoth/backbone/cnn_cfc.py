@@ -55,10 +55,10 @@ class BasicBlock(nn.Module):
         :param x: input tensor (batch_size, input_size)
         :return: output tensor (10)
         """
-        out = relu(self.bn1(self.conv1(x)))
+        out = F.relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
-        out = relu(out)
+        out = F.relu(out)
         return out
 
 
@@ -174,14 +174,14 @@ class ResNet(MammothBackbone):
         batch_size = x.size(0)
         
         # Spatial feature extraction (ResNet)
-        out = relu(self.bn1(self.conv1(x)))  # 64, 32, 32
+        out = F.relu(self.bn1(self.conv1(x)))  # 64, 32, 32
         if hasattr(self, 'maxpool'):
             out = self.maxpool(out)
         out = self.layer1(out)  # -> 64, 32, 32
         out = self.layer2(out)  # -> 128, 16, 16
         out = self.layer3(out)  # -> 256, 8, 8
         out = self.layer4(out)  # -> 512, 4, 4
-        out = avg_pool2d(out, out.shape[2])  # -> 512, 1, 1
+        out = F.avg_pool2d(out, out.shape[2])  # -> 512, 1, 1
         feature = out.view(batch_size, -1)  # (batch_size, feature_dim)
         
         if self.use_cfc:

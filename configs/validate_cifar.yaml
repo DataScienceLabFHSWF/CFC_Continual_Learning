@@ -1,0 +1,34 @@
+# CIFAR Validation - cnn-cfc backbone
+
+python_cmd: python
+venv_path: ../.venv/bin/activate
+base_path: ./mammoth
+
+gpus:
+  - 0
+  - 1
+
+global_args:
+  n_epochs: 1
+  batch_size: 32
+  num_workers: 0
+
+datasets:
+  - seq-cifar10
+
+models:
+  - er
+
+backbones:
+  - cnn-cfc
+
+seeds:
+  - 0
+
+model_args:
+  er:
+    buffer_size: 200
+
+dataset_args:
+  seq-cifar10:
+    lr: 0.01

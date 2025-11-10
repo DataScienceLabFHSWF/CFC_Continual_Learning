@@ -1,0 +1,123 @@
+# Tennessee Eastman Process Benchmark Configuration
+# Compares CfC neural networks against tree-based methods
+
+python_cmd: python
+venv_path: ../.venv/bin/activate
+base_path: ./mammoth
+
+# GPU assignment for parallel execution
+gpus:
+  - 0
+  - 1
+
+# Global arguments for neural network methods
+global_args:
+  n_epochs: 50
+  batch_size: 64
+  num_workers: 0
+  savecheck: task
+  enable_other_metrics: true
+
+# Datasets (TEP only)
+datasets:
+  - tennessee-eastman
+
+# Neural network continual learning methods
+models:
+  - sgd
+  - er
+  - derpp
+  - lwf
+  - ewc_on
+
+# CfC backbones for TEP
+backbones:
+  - tepcfc       # CfC with NCP wiring
+  - teplstm      # LSTM baseline
+
+# Seeds for reproducibility
+seeds:
+  - 0
+  - 42
+  - 123
+
+# Model-specific arguments
+model_args:
+  er:
+    buffer_size: 1000
+    minibatch_size: 64
+  
+  derpp:
+    buffer_size: 1000
+    alpha: 0.2
+    beta: 0.5
+  
+  lwf:
+    alpha: 0.5
+    temperature: 2.0
+  
+  ewc_on:
+    e_lambda: 1000
+    gamma: 1.0
+
+# Backbone-specific arguments
+backbone_args:
+  tepcfc:
+    input_size: 52
+    output_size: 21
+    hidden_size: 128
+    use_ncp_wiring: 1
+  
+  teplstm:
+    input_size: 52
+    output_size: 21
+    hidden_size: 128
+
+# Dataset-specific arguments
+dataset_args:
+  tennessee-eastman:
+    lr: 0.001
+
+# Traditional ML methods (tree-based)
+traditional_ml:
+  # Models to test
+  models:
+    - xgboost
+    - lightgbm
+    - random_forest
+    - gradient_boosting
+  
+  # Datasets for traditional ML
+  datasets:
+    - tennessee-eastman
+  
+  # Seeds
+  seeds:
+    - 0
+    - 42
+    - 123
+  
+  # Global args for traditional ML
+  args:
+    output_dir: tep_ml_results
+  
+  # Model-specific arguments for traditional ML
+  model_args:
+    xgboost:
+      n_estimators: 100
+      max_depth: 6
+      learning_rate: 0.1
+    
+    lightgbm:
+      n_estimators: 100
+      max_depth: 6
+      learning_rate: 0.1
+    
+    random_forest:
+      n_estimators: 100
+      max_depth: 10
+    
+    gradient_boosting:
+      n_estimators: 100
+      max_depth: 6
+      learning_rate: 0.1

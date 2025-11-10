@@ -1,0 +1,41 @@
+# Quick Test Configuration
+# Fast configuration for testing the benchmark runner
+
+python_cmd: python
+venv_path: ../.venv/bin/activate
+base_path: ./mammoth
+
+global_args:
+  n_epochs: 2
+  batch_size: 32
+  num_workers: 0
+  savecheck: none
+
+datasets:
+  - seq-mnist
+
+models:
+  - sgd
+  - er
+
+backbones:
+  - mnistcfc
+
+seeds:
+  - 0
+
+model_args:
+  er:
+    buffer_size: 200
+
+backbone_args:
+  mnistcfc:
+    input_size: 784
+    output_size: 10
+    hidden_size: 128
+    use_ncp_wiring: 1
+    chunk_size: 28
+
+dataset_args:
+  seq-mnist:
+    lr: 0.03

@@ -5,8 +5,13 @@ import torch
 import torch.nn as nn
 
 from backbone import MammothBackbone, register_backbone
-from ncps.torch import CfC
-from ncps.wirings import AutoNCP, FullyConnected
+
+try:
+    from ncps.torch import CfC
+    from ncps.wirings import AutoNCP, FullyConnected
+    NCPS_AVAILABLE = True
+except ImportError:
+    NCPS_AVAILABLE = False
 
 
 class BaseTEPCfC(MammothBackbone):
@@ -93,9 +98,10 @@ class BaseTEPCfC(MammothBackbone):
         x = self.input_projection(x)  # (batch, seq_len, hidden_size)
         
         # Process through CfC
-        # Initialize hidden state if needed
-        if self.hidden_state is None or self.hidden_state.size(0) != batch_size:
-            self.hidden_state = None
+        # Reset hidden state for each batch to avoid backpropagation issues
+        # In a real deployment, you might want to maintain state across sequences,
+        # but for training with random batches, we reset each time
+        self.hidden_state = None
         
         output, self.hidden_state = self.rnn(x, self.hidden_state)
         # output: (batch, seq_len, num_classes)
@@ -164,9 +170,8 @@ class TEPLSTM(nn.Module):
         if x.dim() == 2:
             x = x.unsqueeze(1)
         
-        # Initialize hidden state if needed
-        if self.hidden_state is None or self.hidden_state[0].size(1) != batch_size:
-            self.hidden_state = None
+        # Reset hidden state for each batch to avoid backpropagation issues
+        self.hidden_state = None
         
         output, self.hidden_state = self.lstm(x, self.hidden_state)
         last_output = output[:, -1, :]
@@ -191,11 +196,11 @@ class TEPLSTM(nn.Module):
 @register_backbone('tepcfc')
 def tepcfc(num_features: int = 52, num_classes: int = 22, hidden_size: int = 256, use_ncp_wiring: bool = True):
     """CfC backbone for Tennessee Eastman Process fault detection."""
-    return BaseTEPCfC(num_features=num_features, num_classes=num_classes, 
+    return BaseTEPCfC(input_size=num_features, num_classes=num_classes, 
                       hidden_size=hidden_size, use_ncp_wiring=use_ncp_wiring)
 
 
 @register_backbone('teplstm')
 def teplstm(num_features: int = 52, num_classes: int = 22, hidden_size: int = 256):
     """LSTM baseline for Tennessee Eastman Process."""
-    return TEPLSTM(num_features=num_features, num_classes=num_classes, hidden_size=hidden_size)
+    return TEPLSTM(input_size=num_features, num_classes=num_classes, hidden_size=hidden_size)

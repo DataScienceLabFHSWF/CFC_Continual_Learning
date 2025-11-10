@@ -1,0 +1,87 @@
+# Paper Experiments Configuration
+# Main experiments for the publication
+
+python_cmd: python
+venv_path: ../.venv/bin/activate
+base_path: ./mammoth
+
+global_args:
+  n_epochs: 50
+  batch_size: 32
+  num_workers: 0
+  savecheck: task
+  enable_other_metrics: true
+
+# Datasets: MNIST and CIFAR variants
+datasets:
+  - seq-mnist
+  - seq-cifar10
+  - seq-cifar100
+
+# Compare CfC architectures against standard baselines
+models:
+  - sgd           # Naive baseline
+  - er            # Experience Replay
+  - derpp         # Dark Experience Replay++
+  - lwf           # Learning without Forgetting
+  - ewc_on        # EWC Online
+  - icarl         # iCaRL
+
+# CfC vs Standard architectures
+backbones:
+  - mnistcfc      # Our CfC for MNIST
+  - cnn-cfc       # Our CfC for CIFAR
+  - resnet18      # Standard baseline
+  - mlp           # Simple baseline
+
+# Multiple seeds for statistical significance
+seeds:
+  - 0
+  - 42
+  - 123
+  - 456
+  - 789
+
+model_args:
+  er:
+    buffer_size: 1000
+    minibatch_size: 32
+  
+  derpp:
+    buffer_size: 1000
+    alpha: 0.1
+    beta: 0.5
+  
+  lwf:
+    alpha: 0.5
+    temperature: 2.0
+  
+  ewc_on:
+    e_lambda: 1000
+    gamma: 1.0
+  
+  icarl:
+    buffer_size: 1000
+    lr: 0.1
+
+backbone_args:
+  mnistcfc:
+    input_size: 784
+    output_size: 10
+    hidden_size: 256
+    use_ncp_wiring: 1
+    chunk_size: 28
+  
+  cnn-cfc:
+    hidden_size: 256
+    use_ncp_wiring: 1
+
+dataset_args:
+  seq-mnist:
+    lr: 0.03
+  
+  seq-cifar10:
+    lr: 0.01
+  
+  seq-cifar100:
+    lr: 0.01

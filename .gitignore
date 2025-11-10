@@ -43,3 +43,35 @@ poetry.lock
 # Dev docs (not for publication)
 SCIENTIFIC_IMPROVEMENT_PLAN.md
 SUMMARY.md
+# Results and checkpoints
+paper_results/
+results/validation/
+results/benchmarks/
+results/checkpoints/
+*.csv
+*.log
+
+# Wandb
+wandb/
+.wandb/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Environment
+.venv/
+venv/
+
+# Secrets
+.secrets.json
+
+# Data
+data/
+*.npy
+*.pkl

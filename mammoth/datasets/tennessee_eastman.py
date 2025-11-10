@@ -6,9 +6,9 @@ from typing import Tuple
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from backbone.TEPcfc import BaseTEPCfC
-from datasets.utils.continual_dataset import ContinualDataset
+from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
 from datasets.utils import set_default_from_args
 from utils.conf import base_path
 
@@ -70,6 +70,10 @@ class TennesseeEastmanDataset(Dataset):
             try:
                 data = np.loadtxt(filepath)
                 
+                # TEP data format: (52, timesteps) - transpose to (timesteps, 52)
+                if data.shape[0] == 52:
+                    data = data.T
+                
                 # Normalize data (z-score normalization)
                 data = (data - data.mean(axis=0)) / (data.std(axis=0) + 1e-8)
                 
@@ -89,6 +93,10 @@ class TennesseeEastmanDataset(Dataset):
         
         self.windows = np.array(self.windows, dtype=np.float32)
         self.labels = np.array(self.labels, dtype=np.int64)
+        
+        # Mammoth v2 requires 'data' and 'targets' attributes
+        self.data = torch.from_numpy(self.windows)
+        self.targets = torch.from_numpy(self.labels)
         
         print(f"Loaded {len(self.windows)} windows for fault IDs {self.fault_ids} ({mode})")
     
@@ -127,24 +135,21 @@ class TennesseeEastmanContinual(ContinualDataset):
     SETTING = 'class-il'  # Class-incremental learning
     N_CLASSES_PER_TASK = 1  # One fault per task
     N_TASKS = 22  # Normal + 21 faults
+    SIZE = (52,)  # 52 process variables (time-series input)
     
     def __init__(self, args):
         super().__init__(args)
         self.window_size = getattr(args, 'tep_window_size', 50)
         self.stride = getattr(args, 'tep_stride', 10)
-        self.current_task = 0
+        self._task_idx = 0
         
     def get_data_loaders(self):
         """Get train and test loaders for current task."""
-        # Get fault ID for current task
-        fault_ids = [self.current_task]
-        
-        # For testing, include all faults seen so far (class-incremental)
-        test_fault_ids = list(range(self.current_task + 1))
-        
+        # Load ALL faults and let store_masked_loaders do the task-based filtering
+        # This is the correct way for Mammoth v2 - it will mask based on targets
         train_dataset = TennesseeEastmanDataset(
             data_path=os.path.join(base_path(), 'TEP'),
-            fault_ids=fault_ids,
+            fault_ids=None,  # Load ALL faults
             train=True,
             window_size=self.window_size,
             stride=self.stride
@@ -152,31 +157,19 @@ class TennesseeEastmanContinual(ContinualDataset):
         
         test_dataset = TennesseeEastmanDataset(
             data_path=os.path.join(base_path(), 'TEP'),
-            fault_ids=test_fault_ids,
+            fault_ids=None,  # Load ALL faults
             train=False,
             window_size=self.window_size,
             stride=self.stride
         )
         
-        train_loader = DataLoader(
-            train_dataset,
-            batch_size=self.args.batch_size,
-            shuffle=True,
-            num_workers=4
-        )
+        # Use store_masked_loaders to properly wrap datasets for Mammoth v2
+        train, test = store_masked_loaders(train_dataset, test_dataset, self)
         
-        test_loader = DataLoader(
-            test_dataset,
-            batch_size=self.args.batch_size,
-            shuffle=False,
-            num_workers=4
-        )
+        # Don't append test_loaders here - parent class handles it
+        self.train_loader = train
         
-        self.test_loaders.append(test_loader)
-        self.train_loader = train_loader
-        self.current_task += 1
-        
-        return train_loader, test_loader
+        return train, test
     
     @staticmethod
     @set_default_from_args("backbone")
@@ -227,6 +220,8 @@ class TennesseeEastmanJoint(ContinualDataset):
     NAME = 'tennessee-eastman-joint'
     SETTING = 'class-il'
     N_CLASSES_PER_TASK = 22  # All faults in single task
+    N_TASKS = 1
+    SIZE = (52,)  # 52 process variables
     N_TASKS = 1
     
     def __init__(self, args):
