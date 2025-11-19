@@ -36,8 +36,9 @@ nvidia-nvtx-cu12==12.1.105
 onedrivedownloader==1.1.3
 packaging==25.0
 pandas==2.3.3
-pillow==11.3.0
+pillow==12.0.0
 platformdirs==4.5.0
+cryptography==46.0.3
 protobuf==6.33.0
 pydantic==2.12.4
 pydantic-core==2.41.5
@@ -55,6 +56,7 @@ six==1.17.0
 smmap==5.0.2
 sympy==1.13.1
 threadpoolctl==3.6.0
+tornado==6.5.2
 torch==2.5.1+cu121
 torchvision==0.20.1+cu121
 tqdm==4.67.1
