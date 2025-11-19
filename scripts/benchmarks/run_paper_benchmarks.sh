@@ -12,7 +12,7 @@
 #   --dataset DATASET   Run only specific dataset (mnist, cifar10, tep, all)
 #   --dry-run           Print commands without executing
 #   --force             Force re-run even if experiments already completed
-#   --max-parallel N    Maximum parallel experiments (default: 4)
+#   --max-parallel N    Maximum parallel experiments (default: 16)
 # ============================================================================
 
 set -e
@@ -32,7 +32,7 @@ WANDB_PROJECT="mammoth"
 DATASET="all"
 DRY_RUN=false
 FORCE_RERUN=false
-MAX_PARALLEL=4
+MAX_PARALLEL=16  # Increased from 4 to 16 for better GPU utilization
 SEEDS=(0 1 2)
 
 # Parse arguments
@@ -150,8 +150,6 @@ run_experiment() {
     echo '========================================'
     echo 'Experiment completed: \$(date)'
     echo '========================================'
-    
-    read -p 'Press enter to close...'
   "
   
   echo "  Started: $session_name (log: $log_file)"

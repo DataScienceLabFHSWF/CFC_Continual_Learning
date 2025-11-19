@@ -381,6 +381,12 @@ def add_management_args(parser: ArgumentParser) -> None:
     mng_group.add_argument('--num_workers', type=int, default=None, help='Number of workers for the dataloaders (default=infer from number of cpus).')
     mng_group.add_argument('--enable_other_metrics', default=0, type=binary_to_boolean_type,
                            help='Enable computing additional metrics: forward and backward transfer.')
+    mng_group.add_argument('--enable_advanced_metrics', default=0, type=binary_to_boolean_type,
+                           help='Enable advanced metrics: Representational Stability, Weight Change, and Gradient Interference.')
+    mng_group.add_argument('--enable_tau_monitor', default=0, type=binary_to_boolean_type,
+                           help='Enable tau (time constant) monitoring for LTC-based backbones.')
+    mng_group.add_argument('--tau_log_interval', type=int, default=100,
+                           help='Log tau statistics every N steps (default: 100).')
     mng_group.add_argument('--debug_mode', type=binary_to_boolean_type, default=0, help='Run only a few training steps per epoch. This also disables logging on wandb.')
     mng_group.add_argument('--inference_only', default=0, type=binary_to_boolean_type,
                            help='Perform inference only for each task (no training).')

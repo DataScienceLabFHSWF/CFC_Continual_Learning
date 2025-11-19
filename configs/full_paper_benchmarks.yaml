@@ -1,0 +1,338 @@
+# ============================================================================
+# Full Paper Benchmarks: Baselines + Ablations + Metrics
+# ============================================================================
+# This configuration combines:
+# 1. Baseline experiments (MLP, ResNet + CL methods)
+# 2. CfC/NCP architectures
+# 3. Ablation studies (LTC, Random Sparse, etc.)
+# 4. Advanced metrics enabled globally
+#
+# Run with: python utils/main.py --config ../configs/full_paper_benchmarks.yaml
+# ============================================================================
+
+# Global settings - applied to ALL experiments
+global_settings:
+  enable_other_metrics: 1           # BWT, FWT
+  enable_advanced_metrics: 1         # RepStab, Weight Change, Gradient Interference
+  enable_tau_monitor: 1              # Tau monitoring (auto-activates for LTC backbones)
+  tau_log_interval: 100
+  nowand: 0                          # Enable WandB
+  wandb_entity: fneubuerger
+  wandb_project: mammoth
+
+# ============================================================================
+# MNIST Experiments
+# ============================================================================
+
+mnist_baselines:
+  dataset: seq-mnist
+  n_epochs: 10
+  batch_size: 32
+  
+  # Baseline: MLP
+  architectures:
+    - backbone: mnistmlp
+      hidden_size: 256
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: joint
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 200
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 500
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: 200
+          alpha: 0.1
+          beta: 0.5
+          
+        - name: ewc_on
+          lr: 0.1
+          e_lambda: 0.7
+          gamma: 1.0
+
+mnist_cfc:
+  dataset: seq-mnist
+  n_epochs: 10
+  batch_size: 32
+  
+  # Main method: CfC with AutoNCP
+  architectures:
+    - backbone: mnistcfc
+      hidden_size: 256  # AutoNCP: 64 sens, 128 inter, 32 cmd, 32 motor
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: joint
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 200
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 500
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: 200
+          alpha: 0.1
+          beta: 0.5
+          
+        - name: ewc_on
+          lr: 0.1
+          e_lambda: 0.7
+          gamma: 1.0
+
+mnist_ltc:
+  dataset: seq-mnist
+  n_epochs: 10
+  batch_size: 32
+  
+  # Ablation: LTC (true ODE solver)
+  architectures:
+    - backbone: mnistltc
+      hidden_size: 256
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 200
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: 200
+          alpha: 0.1
+          beta: 0.5
+
+mnist_random_sparse:
+  dataset: seq-mnist
+  n_epochs: 10
+  batch_size: 32
+  
+  # Ablation: Random Sparse (tests H1: structure vs sparsity)
+  architectures:
+    - backbone: mnist_random_sparse
+      hidden_size: 256
+      sparsity_level: 0.7
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 200
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: 200
+          alpha: 0.1
+          beta: 0.5
+
+# ============================================================================
+# CIFAR-10 Experiments
+# ============================================================================
+
+cifar10_baselines:
+  dataset: seq-cifar10
+  n_epochs: 50
+  batch_size: 64
+  
+  architectures:
+    - backbone: resnet18
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: joint
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 500
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 2000
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: 500
+          alpha: 0.1
+          beta: 0.5
+
+cifar10_cfc:
+  dataset: seq-cifar10
+  n_epochs: 50
+  batch_size: 64
+  
+  architectures:
+    - backbone: cnn-cfc
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: joint
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 500
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 2000
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: 500
+          alpha: 0.1
+          beta: 0.5
+
+cifar10_ltc:
+  dataset: seq-cifar10
+  n_epochs: 50
+  batch_size: 64
+  
+  architectures:
+    - backbone: cnn-ltc
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 500
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: 500
+          alpha: 0.1
+          beta: 0.5
+
+cifar10_random_sparse:
+  dataset: seq-cifar10
+  n_epochs: 50
+  batch_size: 64
+  
+  architectures:
+    - backbone: cnn_random_sparse
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 500
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: 500
+          alpha: 0.1
+          beta: 0.5
+
+# ============================================================================
+# TEP (Tennessee Eastman Process) Experiments
+# ============================================================================
+
+tep_baselines:
+  dataset: seq-tep
+  n_epochs: 20
+  batch_size: 32
+  
+  architectures:
+    - backbone: teprnn
+      models:
+        - name: sgd
+          lr: 0.001
+          
+        - name: joint
+          lr: 0.001
+          
+        - name: er
+          lr: 0.001
+          buffer_size: 200
+          
+        - name: derpp
+          lr: 0.001
+          buffer_size: 200
+          alpha: 0.1
+          beta: 0.5
+
+tep_cfc:
+  dataset: seq-tep
+  n_epochs: 20
+  batch_size: 32
+  
+  architectures:
+    - backbone: tepcfc
+      models:
+        - name: sgd
+          lr: 0.001
+          
+        - name: joint
+          lr: 0.001
+          
+        - name: er
+          lr: 0.001
+          buffer_size: 200
+          
+        - name: derpp
+          lr: 0.001
+          buffer_size: 200
+          alpha: 0.1
+          beta: 0.5
+
+tep_ltc:
+  dataset: seq-tep
+  n_epochs: 20
+  batch_size: 32
+  
+  architectures:
+    - backbone: tepltc
+      models:
+        - name: sgd
+          lr: 0.001
+          
+        - name: er
+          lr: 0.001
+          buffer_size: 200
+          
+        - name: derpp
+          lr: 0.001
+          buffer_size: 200
+          alpha: 0.1
+          beta: 0.5
+
+tep_random_sparse:
+  dataset: seq-tep
+  n_epochs: 20
+  batch_size: 32
+  
+  architectures:
+    - backbone: tep_random_sparse
+      models:
+        - name: sgd
+          lr: 0.001
+          
+        - name: er
+          lr: 0.001
+          buffer_size: 200
+          
+        - name: derpp
+          lr: 0.001
+          buffer_size: 200
+          alpha: 0.1
+          beta: 0.5
