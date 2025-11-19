@@ -80,3 +80,11 @@ def mnistmlp(num_classes: int, mlp_hidden_size: int = 100) -> BaseMNISTMLP:
     if mlp_hidden_size != 100:
         logging.debug(f"hidden size is set to `{mlp_hidden_size}` instead of the default `100`")
     return BaseMNISTMLP(28 * 28, num_classes, hidden_size=mlp_hidden_size)
+
+
+@register_backbone("tepmlp")
+def tepmlp(input_size: int = 52, output_size: int = 22):
+    """
+    MLP backbone for Tennessee Eastman Process.
+    """
+    return BaseMNISTMLP(input_size, output_size)

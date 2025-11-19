@@ -251,3 +251,8 @@ def cnn_dense_cfc(input_size: int = 3, output_size: int = 10,
     """ResNet-18 with Dense CfC classifier."""
     return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=output_size, nf=20, 
                   use_cfc=True, cfc_hidden_size=cfc_hidden_size, use_ncp_wiring=False)
+
+@register_backbone('resnet18')
+def resnet18(input_size: int = 3, output_size: int = 10):
+    """Standard ResNet-18 backbone (Vanilla)."""
+    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=output_size, nf=20, use_cfc=False)

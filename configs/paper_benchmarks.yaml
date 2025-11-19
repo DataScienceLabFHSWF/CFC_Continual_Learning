@@ -237,6 +237,27 @@ tep:
           lr: 0.001
           e_lambda: 0.5
           gamma: 1.0
+          
+    # MLP baseline
+    - backbone: tepmlp
+      experiments:
+        - name: sgd
+          lr: 0.001
+          
+        - name: er
+          lr: 0.001
+          buffer_size: [200, 500, 1000]
+          
+        - name: derpp
+          lr: 0.001
+          buffer_size: [200, 500, 1000]
+          alpha: 0.1
+          beta: 0.5
+          
+        - name: ewc_on
+          lr: 0.001
+          e_lambda: 0.5
+          gamma: 1.0
 
 # ============================================================================
 # Execution Configuration
