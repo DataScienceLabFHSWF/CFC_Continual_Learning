@@ -150,3 +150,10 @@ def mnistcfc(input_size: int = 784, output_size: int = 10,
     """CfC backbone for MNIST with AutoNCP wiring."""
     return BaseMNISTcfc(input_size, output_size, hidden_size=hidden_size, 
                         chunk_size=chunk_size, use_ncp_wiring=use_ncp_wiring)
+
+@register_backbone('mnist_dense_cfc')
+def mnist_dense_cfc(input_size: int = 784, output_size: int = 10, 
+             hidden_size: int = 256, chunk_size: int = 28):
+    """CfC backbone for MNIST with Fully Connected wiring (Vanilla CfC)."""
+    return BaseMNISTcfc(input_size, output_size, hidden_size=hidden_size, 
+                        chunk_size=chunk_size, use_ncp_wiring=False)

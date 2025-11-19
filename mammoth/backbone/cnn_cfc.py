@@ -69,7 +69,7 @@ class ResNet(MammothBackbone):
 
     def __init__(self, block: BasicBlock, num_blocks: List[int],
                  num_classes: int, nf: int, use_cfc: bool = True, 
-                 cfc_hidden_size: int = 256) -> None:
+                 cfc_hidden_size: int = 256, use_ncp_wiring: bool = True) -> None:
         """
         Instantiates the layers of the network.
         
@@ -85,6 +85,7 @@ class ResNet(MammothBackbone):
         :param nf: the number of filters
         :param use_cfc: whether to use CfC layer (True) or standard linear (False)
         :param cfc_hidden_size: hidden size for CfC layer
+        :param use_ncp_wiring: whether to use AutoNCP wiring (True) or Fully Connected (False)
         """
         super(ResNet, self).__init__()
         self.in_planes = nf
@@ -112,12 +113,18 @@ class ResNet(MammothBackbone):
             # 2. Use CfC as a stateful readout (process batch as sequence)
             # Here we use option 2: process features with recurrent dynamics
             
-            from ncps.wirings import AutoNCP
-            # Use NCP wiring for structured sparsity
-            # AutoNCP requires output_size < units - 2
-            wiring = AutoNCP(cfc_hidden_size, cfc_hidden_size // 2)
-            self.cfc = CfC(self.feature_dim, wiring, batch_first=True)
-            self.cfc_output_size = cfc_hidden_size // 2
+            if use_ncp_wiring:
+                from ncps.wirings import AutoNCP
+                # Use NCP wiring for structured sparsity
+                # AutoNCP requires output_size < units - 2
+                wiring = AutoNCP(cfc_hidden_size, cfc_hidden_size // 2)
+                self.cfc = CfC(self.feature_dim, wiring, batch_first=True)
+                self.cfc_output_size = cfc_hidden_size // 2
+            else:
+                # Fully connected CfC (Vanilla)
+                self.cfc = CfC(self.feature_dim, cfc_hidden_size, batch_first=True)
+                self.cfc_output_size = cfc_hidden_size
+                
             self.linear = nn.Linear(self.cfc_output_size, num_classes)
         else:
             # Standard feedforward classifier for ablation comparison
@@ -237,3 +244,10 @@ def CFCresnet18(nclasses: int, nf: int=64) -> ResNet:
 def cnn_cfc(num_classes: int, nf: int = 64, use_cfc: bool = True, cfc_hidden_size: int = 256):
     """ResNet18 with CfC temporal processing."""
     return ResNet(BasicBlock, [2, 2, 2, 2], num_classes, nf, use_cfc=use_cfc, cfc_hidden_size=cfc_hidden_size)
+
+@register_backbone('cnn_dense_cfc')
+def cnn_dense_cfc(input_size: int = 3, output_size: int = 10, 
+             cfc_hidden_size: int = 256):
+    """ResNet-18 with Dense CfC classifier."""
+    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=output_size, nf=20, 
+                  use_cfc=True, cfc_hidden_size=cfc_hidden_size, use_ncp_wiring=False)

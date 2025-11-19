@@ -204,3 +204,10 @@ def tepcfc(num_features: int = 52, num_classes: int = 22, hidden_size: int = 256
 def teplstm(num_features: int = 52, num_classes: int = 22, hidden_size: int = 256):
     """LSTM baseline for Tennessee Eastman Process."""
     return TEPLSTM(input_size=num_features, num_classes=num_classes, hidden_size=hidden_size)
+
+
+@register_backbone('tep_dense_cfc')
+def tep_dense_cfc(num_features: int = 52, num_classes: int = 22, hidden_size: int = 256):
+    """CfC backbone for TEP with Fully Connected wiring (Vanilla CfC)."""
+    return BaseTEPCfC(input_size=num_features, num_classes=num_classes, 
+                      hidden_size=hidden_size, use_ncp_wiring=False)
