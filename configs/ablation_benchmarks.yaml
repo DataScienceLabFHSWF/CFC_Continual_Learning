@@ -70,6 +70,28 @@ mnist_ablations:
           e_lambda: 0.7
           gamma: 1.0
 
+    # Dense CfC (Vanilla) - Tests H1: Sparsity vs. Dense
+    - backbone: mnist_dense_cfc
+      hidden_size: 256
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 200
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: 200
+          alpha: 0.1
+          beta: 0.5
+          
+        - name: ewc_on
+          lr: 0.1
+          e_lambda: 0.7
+          gamma: 1.0
+
 # ============================================================================
 # CIFAR-10 Architecture Ablations
 # ============================================================================
@@ -114,6 +136,23 @@ cifar10_ablations:
           alpha: 0.1
           beta: 0.5
 
+    # Dense CfC (Vanilla)
+    - backbone: cnn_dense_cfc
+      cfc_hidden_size: 256
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 500
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: 500
+          alpha: 0.1
+          beta: 0.5
+
 # ============================================================================
 # TEP Architecture Ablations
 # ============================================================================
@@ -144,6 +183,23 @@ tep_ablations:
     - backbone: tep_random_sparse
       hidden_size: 128
       sparsity_level: 0.7
+      models:
+        - name: sgd
+          lr: 0.001
+          
+        - name: er
+          lr: 0.001
+          buffer_size: 500
+          
+        - name: derpp
+          lr: 0.001
+          buffer_size: 500
+          alpha: 0.1
+          beta: 0.5
+
+    # Dense CfC (Vanilla)
+    - backbone: tep_dense_cfc
+      hidden_size: 128
       models:
         - name: sgd
           lr: 0.001
