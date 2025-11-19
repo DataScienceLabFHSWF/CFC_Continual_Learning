@@ -8,7 +8,7 @@
 # Usage:
 #   ./launch_paper_benchmarks.sh [--dataset DATASET] [--max-parallel N]
 #
-# The main orchestrator runs in: tmux session "paper_orchestrator"
+# The main orchestrator runs in: tmux session "benchmark_orchestrator"
 # Individual experiments run in:  tmux sessions "paper_*"
 # ============================================================================
 
@@ -19,7 +19,7 @@ DATASET="${1:-mnist}"
 MAX_PARALLEL="${2:-4}"
 
 # Kill existing orchestrator if it exists
-tmux kill-session -t paper_orchestrator 2>/dev/null || true
+tmux kill-session -t benchmark_orchestrator 2>/dev/null || true
 
 echo "============================================================================"
 echo "Launching Paper Benchmarks in Detached Mode"
@@ -33,7 +33,7 @@ echo "You can safely disconnect - everything will keep running."
 echo ""
 
 # Create the orchestrator session
-tmux new-session -d -s paper_orchestrator "
+tmux new-session -d -s benchmark_orchestrator "
   cd $WORKSPACE
   source .venv/bin/activate
   
@@ -71,14 +71,14 @@ tmux new-session -d -s paper_orchestrator "
   read
 "
 
-echo "✅ Orchestrator launched in tmux session: paper_orchestrator"
+echo "✅ Orchestrator launched in tmux session: benchmark_orchestrator"
 echo ""
 echo "============================================================================"
 echo "How to Monitor:"
 echo "============================================================================"
 echo ""
 echo "1. Attach to orchestrator:"
-echo "   tmux attach -t paper_orchestrator"
+echo "   tmux attach -t benchmark_orchestrator"
 echo ""
 echo "2. List all running experiments:"
 echo "   tmux ls"
@@ -103,4 +103,4 @@ sleep 2
 
 # Show the orchestrator output
 echo "Current orchestrator status:"
-tmux capture-pane -t paper_orchestrator -p | tail -20
+tmux capture-pane -t benchmark_orchestrator -p | tail -20

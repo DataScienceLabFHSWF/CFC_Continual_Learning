@@ -32,6 +32,13 @@ try:
 except ImportError:
     wandb = None
 
+try:
+    from utils.tau_monitor import get_tau_monitor
+    from utils.advanced_metrics import AdvancedMetricsManager
+except ImportError:
+    get_tau_monitor = None
+    AdvancedMetricsManager = None
+
 
 def initialize_wandb(args: Namespace) -> None:
     """
@@ -63,7 +70,10 @@ def train_single_epoch(model: ContinualModel,
                        epoch: int,
                        pbar: tqdm,
                        system_tracker=None,
-                       scheduler=None) -> int:
+                       scheduler=None,
+                       tau_monitor=None,
+                       metrics_manager=None,
+                       cur_task=None) -> int:
     """
     Trains the model for a single epoch.
 
@@ -108,6 +118,22 @@ def train_single_epoch(model: ContinualModel,
         loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch, **extra_fields)
 
         assert not math.isnan(loss)
+
+        # Hook: Advanced metrics - cache gradients after backward
+        if metrics_manager is not None and cur_task is not None:
+            try:
+                metrics_manager.on_backward(model.net, cur_task)
+            except Exception as e:
+                if i == 0:  # Only log once per epoch
+                    logging.warning(f"Failed to cache gradients for advanced metrics: {e}")
+
+        # Hook: Tau monitoring - update tau statistics
+        if tau_monitor is not None and cur_task is not None:
+            try:
+                tau_monitor.update(model.net, cur_task, epoch, use_wandb=(not args.nowand))
+            except Exception as e:
+                if i == 0:  # Only log once per epoch
+                    logging.warning(f"Failed to update tau monitor: {e}")
 
         if scheduler is not None and args.scheduler_mode == 'iter':
             scheduler.step()
@@ -155,6 +181,28 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
     model.net.to(model.device)
     torch.cuda.empty_cache()
+
+    # Initialize advanced metrics and tau monitoring
+    tau_monitor = None
+    metrics_manager = None
+    
+    if args.enable_tau_monitor and get_tau_monitor is not None:
+        # Check if the backbone is LTC-based
+        backbone_name = args.backbone.lower() if hasattr(args, 'backbone') else ''
+        if 'ltc' in backbone_name:
+            tau_monitor = get_tau_monitor(enabled=True, log_every_n_steps=args.tau_log_interval)
+            logging.info("Tau monitoring enabled for LTC backbone")
+        else:
+            logging.warning(f"Tau monitoring requested but backbone '{backbone_name}' is not LTC-based. Skipping.")
+    
+    if args.enable_advanced_metrics and AdvancedMetricsManager is not None:
+        metrics_config = {
+            'representational_stability': {'enabled': True},
+            'weight_change': {'enabled': True},
+            'gradient_interference': {'enabled': True}
+        }
+        metrics_manager = AdvancedMetricsManager(metrics_config)
+        logging.info("Advanced metrics enabled: Representational Stability, Weight Change, Gradient Interference")
 
     with track_system_stats(logger) as system_tracker:
         results, results_mask_classes = [], []
@@ -215,6 +263,13 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             model.meta_begin_task(dataset)
 
+            # Hook: Advanced metrics - on task start
+            if metrics_manager is not None:
+                try:
+                    metrics_manager.on_task_start(model.net, cur_task, train_loader, model.device)
+                except Exception as e:
+                    logging.warning(f"Failed to initialize advanced metrics for task {cur_task}: {e}")
+
             if not can_compute_fwd_beforetask and is_fwd_enabled and args.enable_other_metrics:
                 if train_loader.dataset.num_times_iterated == 0:  # compute only if the model has not been trained yet
                     try:
@@ -260,7 +315,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     train_pbar.set_description(f"Task {cur_task + 1} - Epoch {epoch + 1}")
 
                     train_single_epoch(model, train_loader, args, pbar=train_pbar, epoch=epoch,
-                                       system_tracker=system_tracker, scheduler=scheduler)
+                                       system_tracker=system_tracker, scheduler=scheduler,
+                                       tau_monitor=tau_monitor, metrics_manager=metrics_manager,
+                                       cur_task=cur_task)
 
                     model.meta_end_epoch(epoch, dataset)
 
@@ -303,6 +360,20 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 train_pbar.close()
 
             model.meta_end_task(dataset)
+
+            # Hook: Advanced metrics - on task end
+            if metrics_manager is not None:
+                try:
+                    metrics_manager.on_task_end(model.net, cur_task, train_loader, model.device)
+                except Exception as e:
+                    logging.warning(f"Failed to finalize advanced metrics for task {cur_task}: {e}")
+            
+            # Hook: Tau monitoring - on task end
+            if tau_monitor is not None:
+                try:
+                    tau_monitor.on_task_end(cur_task)
+                except Exception as e:
+                    logging.warning(f"Failed to finalize tau monitoring for task {cur_task}: {e}")
 
             accs = eval_dataset.evaluate(model, eval_dataset)
 
@@ -347,6 +418,28 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             accs = final_dataset.evaluate(model, final_dataset)
 
             final_dataset.log(args, logger, accs, 'final', final_dataset.SETTING, prefix="FINAL")
+
+        # Final analysis of advanced metrics and tau monitoring
+        if tau_monitor is not None:
+            try:
+                stability_metrics = tau_monitor.analyze_stability()
+                logging.info(f"Tau Stability Analysis: {stability_metrics}")
+                if not args.nowand and wandb is not None:
+                    wandb.log({"tau_stability": stability_metrics})
+            except Exception as e:
+                logging.warning(f"Failed to analyze tau stability: {e}")
+        
+        if metrics_manager is not None:
+            try:
+                # Generate task pairs for interference analysis
+                task_pairs = [(i, i+1) for i in range(end_task - start_task - 1)]
+                if task_pairs:
+                    final_metrics = metrics_manager.analyze_all(task_pairs)
+                    logging.info(f"Advanced Metrics Summary: {final_metrics}")
+                    if not args.nowand and wandb is not None:
+                        wandb.log({"advanced_metrics": final_metrics})
+            except Exception as e:
+                logging.warning(f"Failed to analyze advanced metrics: {e}")
 
         if args.enable_other_metrics:
             bwt, bwt_mask_class = logger.add_bwt(results, results_mask_classes)

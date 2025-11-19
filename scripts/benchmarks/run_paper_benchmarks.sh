@@ -6,12 +6,13 @@
 # It executes multiple experiments in parallel using tmux sessions.
 #
 # Usage:
-#   ./run_paper_benchmarks.sh [--dataset DATASET] [--dry-run]
+#   ./run_paper_benchmarks.sh [--dataset DATASET] [--dry-run] [--force]
 #
 # Options:
 #   --dataset DATASET   Run only specific dataset (mnist, cifar10, tep, all)
 #   --dry-run           Print commands without executing
-#   --max-parallel N    Maximum parallel experiments (default: 4)
+#   --force             Force re-run even if experiments already completed
+#   --max-parallel N    Maximum parallel experiments (default: 16)
 # ============================================================================
 
 set -e
@@ -30,7 +31,8 @@ WANDB_PROJECT="mammoth"
 # Default settings
 DATASET="all"
 DRY_RUN=false
-MAX_PARALLEL=4
+FORCE_RERUN=false
+MAX_PARALLEL=16  # Increased from 4 to 16 for better GPU utilization
 SEEDS=(0 1 2)
 
 # Parse arguments
@@ -42,6 +44,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --dry-run)
       DRY_RUN=true
+      shift
+      ;;
+    --force)
+      FORCE_RERUN=true
       shift
       ;;
     --max-parallel)
@@ -60,6 +66,26 @@ mkdir -p "$RESULTS_DIR"
 mkdir -p "$CHECKPOINT_DIR"
 mkdir -p "$LOG_DIR"
 
+# Check if experiment already completed
+is_experiment_completed() {
+  local exp_name=$1
+  local seed=$2
+  local log_file="$LOG_DIR/${exp_name}_seed${seed}.log"
+  
+  # If force rerun, always return false (not completed)
+  if [ "$FORCE_RERUN" = true ]; then
+    return 1
+  fi
+  
+  # Check if log file exists and contains completion marker
+  if [ -f "$log_file" ]; then
+    if grep -q "Experiment completed:" "$log_file" 2>/dev/null; then
+      return 0  # Completed
+    fi
+  fi
+  return 1  # Not completed
+}
+
 # Helper function to run experiment
 run_experiment() {
   local exp_name=$1
@@ -75,6 +101,12 @@ run_experiment() {
   local session_name="paper_${exp_name}_s${seed}"
   local log_file="$LOG_DIR/${exp_name}_seed${seed}.log"
   local result_file="$RESULTS_DIR/${exp_name}_seed${seed}.csv"
+  
+  # Check if already completed
+  if is_experiment_completed "$exp_name" "$seed"; then
+    echo "  Skipped: $exp_name (seed $seed) - already completed"
+    return
+  fi
   
   if [ "$DRY_RUN" = true ]; then
     echo "[DRY RUN] Would run: $exp_name (seed $seed)"
@@ -118,8 +150,6 @@ run_experiment() {
     echo '========================================'
     echo 'Experiment completed: \$(date)'
     echo '========================================'
-    
-    read -p 'Press enter to close...'
   "
   
   echo "  Started: $session_name (log: $log_file)"
@@ -128,8 +158,9 @@ run_experiment() {
 # Wait for available slot
 wait_for_slot() {
   while true; do
-    local running=$(tmux list-sessions 2>/dev/null | grep -c "^paper_" || true)
-    if [ -z "$running" ]; then
+    # Count only experiment sessions (paper_*), not the orchestrator (benchmark_orchestrator)
+    local running=$(tmux list-sessions 2>/dev/null | grep "^paper_" | wc -l || echo 0)
+    if [ -z "$running" ] || [ "$running" = "" ]; then
       running=0
     fi
     if [ "$running" -lt "$MAX_PARALLEL" ]; then

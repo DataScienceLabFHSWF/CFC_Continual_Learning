@@ -1,0 +1,253 @@
+# ============================================================================
+# Extended Benchmarks: NCP Architecture Ablation Study
+# ============================================================================
+# This configuration adds LTC and Random Sparse variants to test:
+# - H1 (Modularity): AutoNCP vs. Random Sparse vs. Dense
+# - H2 (Temporal Stability): CfC vs. LTC
+#
+# Run this AFTER paper_benchmarks.yaml for ablation analysis.
+# ============================================================================
+
+# Global settings for advanced metrics
+global_settings:
+  enable_other_metrics: 1
+  enable_advanced_metrics: 1  # Enable Representational Stability, Weight Change, Gradient Interference
+  enable_tau_monitor: 1        # Enable tau monitoring for LTC backbones
+  tau_log_interval: 100
+  nowand: 0  # Enable WandB logging for metrics
+
+# ============================================================================
+# MNIST Architecture Ablations
+# ============================================================================
+mnist_ablations:
+  dataset: seq-mnist
+  n_epochs: 10
+  batch_size: 32
+  
+  architectures:
+    # LTC (Raw ODE solver) - Tests H2: Temporal Stability
+    - backbone: mnistltc
+      hidden_size: 256
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 200
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: 200
+          alpha: 0.1
+          beta: 0.5
+          
+        - name: ewc_on
+          lr: 0.1
+          e_lambda: 0.7
+          gamma: 1.0
+    
+    # Random Sparse - Tests H1: Structure vs. Sparsity
+    - backbone: mnist_random_sparse
+      hidden_size: 256
+      sparsity_level: 0.7  # Match AutoNCP sparsity
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 200
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: 200
+          alpha: 0.1
+          beta: 0.5
+          
+        - name: ewc_on
+          lr: 0.1
+          e_lambda: 0.7
+          gamma: 1.0
+
+# ============================================================================
+# CIFAR-10 Architecture Ablations
+# ============================================================================
+cifar10_ablations:
+  dataset: seq-cifar10
+  n_epochs: 50
+  batch_size: 32
+  
+  architectures:
+    # LTC with ResNet features
+    - backbone: cnn-ltc
+      ltc_hidden_size: 256
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 500
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: 500
+          alpha: 0.1
+          beta: 0.5
+    
+    # Random Sparse with ResNet
+    - backbone: cnn-random-sparse
+      cfc_hidden_size: 256
+      sparsity_level: 0.7
+      models:
+        - name: sgd
+          lr: 0.03
+          
+        - name: er
+          lr: 0.03
+          buffer_size: 500
+          
+        - name: derpp
+          lr: 0.03
+          buffer_size: 500
+          alpha: 0.1
+          beta: 0.5
+
+# ============================================================================
+# TEP Architecture Ablations
+# ============================================================================
+tep_ablations:
+  dataset: tennessee-eastman
+  n_epochs: 20
+  batch_size: 32
+  
+  architectures:
+    # LTC for true temporal data (expected to excel here)
+    - backbone: tepltc
+      hidden_size: 128
+      models:
+        - name: sgd
+          lr: 0.001
+          
+        - name: er
+          lr: 0.001
+          buffer_size: 500
+          
+        - name: derpp
+          lr: 0.001
+          buffer_size: 500
+          alpha: 0.1
+          beta: 0.5
+    
+    # Random Sparse for TEP
+    - backbone: tep_random_sparse
+      hidden_size: 128
+      sparsity_level: 0.7
+      models:
+        - name: sgd
+          lr: 0.001
+          
+        - name: er
+          lr: 0.001
+          buffer_size: 500
+          
+        - name: derpp
+          lr: 0.001
+          buffer_size: 500
+          alpha: 0.1
+          beta: 0.5
+
+# ============================================================================
+# Tau Monitoring Configuration
+# ============================================================================
+tau_monitoring:
+  enabled: true
+  
+  # Which backbones support tau monitoring (LTC only)
+  supported_backbones:
+    - mnistltc
+    - tepltc
+    - cnn-ltc
+  
+  # Logging frequency
+  log_every_n_steps: 100
+  log_distribution: true  # Log histogram to WandB
+  
+  # Analysis metrics
+  metrics:
+    - tau_mean
+    - tau_std
+    - tau_min
+    - tau_max
+    - tau_bimodality  # Test for fast/slow split
+
+# ============================================================================
+# Advanced Metrics Configuration
+# ============================================================================
+advanced_metrics:
+  enabled: true
+  
+  # Representational Stability
+  representational_stability:
+    enabled: true
+    # Measure how much hidden states change after each task
+    reference_task: 0  # Compare all tasks to Task 0
+    metric: cosine_similarity
+    log_to_wandb: true
+  
+  # Weight Change Analysis
+  weight_change:
+    enabled: true
+    # Track weight changes per layer
+    layers_to_track:
+      - input_projection
+      - cfc  # or ltc
+      - classifier
+    metric: frobenius_norm
+    log_to_wandb: true
+  
+  # Gradient Interference
+  gradient_interference:
+    enabled: true
+    # Measure gradient conflicts between tasks
+    task_pairs: [[0, 1], [1, 2], [2, 3], [3, 4]]  # For 5-task scenarios
+    metric: cosine_similarity
+    log_every_n_epochs: 1
+    log_to_wandb: true
+  
+  # Sparsity Analysis
+  sparsity_analysis:
+    enabled: true
+    # Verify actual sparsity levels
+    compute_effective_sparsity: true
+    log_connectivity_matrix: true  # Visualize in WandB
+
+# ============================================================================
+# Execution Settings
+# ============================================================================
+execution:
+  max_parallel: 2  # Fewer because LTC is slower
+  priority: low  # Run after main benchmarks
+  
+  # Save more checkpoints for analysis
+  save_checkpoints:
+    - after_task_1
+    - after_task_3
+    - final
+  
+  # Extended logging
+  verbose: true
+  save_gradients: true  # For gradient interference analysis
+  save_representations: true  # For representational stability
+
+# ============================================================================
+# Expected Additional Runtime
+# ============================================================================
+# LTC is ~10-20x slower than CfC due to ODE solver
+# MNIST LTC: ~20-40 hours per full run (vs. 2-3 for CfC)
+# CIFAR LTC: ~80-150 hours per full run (vs. 8-12 for CfC)
+# TEP LTC: ~40-80 hours per full run (vs. 4-6 for CfC)
+#
+# Recommendation: Run LTC only on MNIST and TEP for now
+# ============================================================================
