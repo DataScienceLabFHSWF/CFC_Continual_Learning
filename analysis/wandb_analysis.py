@@ -1,406 +1,303 @@
 """
-WandB Results Analysis and Visualization
+WandB Results Analysis and Visualization for Paper
 
-This script analyzes experimental results from WandB logs and creates visualizations
-to understand the performance of CfC/NCP networks for continual learning.
+This script fetches results from WandB and generates the specific tables and figures
+required for the paper "Neural Circuit Policies and Liquid Time Constants for Continual Learning".
+
+It requires the `wandb` package and a logged-in user.
 
 Usage:
-    python analysis/wandb_analysis.py --entity fneubuerger --project mammoth
+    python analysis/wandb_analysis.py --entity <your-entity> --project <your-project>
 """
 
 import argparse
 import os
-import yaml
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import wandb
 from pathlib import Path
-from collections import defaultdict
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional
 
-try:
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    HAS_PLOTTING = True
-    # Set style
-    sns.set_style("whitegrid")
-    sns.set_palette("husl")
-    plt.rcParams['figure.figsize'] = (12, 8)
-    plt.rcParams['font.size'] = 10
-except ImportError:
-    HAS_PLOTTING = False
-    print("Note: matplotlib/seaborn not available. Plots will be skipped.")
+# Set publication-quality style
+sns.set_style("whitegrid")
+sns.set_context("paper", font_scale=1.5)
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['figure.figsize'] = (10, 6)
+plt.rcParams['lines.linewidth'] = 2.5
 
-
-def parse_local_wandb_runs(wandb_dir: str) -> List[Dict]:
+def fetch_runs(entity: str, project: str) -> pd.DataFrame:
     """
-    Parse WandB runs from local directory structure.
-    
-    Args:
-        wandb_dir: Path to wandb directory
-        
-    Returns:
-        List of run configurations
+    Fetch all runs from WandB project and return as a DataFrame.
     """
-    runs = []
-    wandb_path = Path(wandb_dir)
+    print(f"Fetching runs from {entity}/{project}...")
+    api = wandb.Api()
+    runs = api.runs(f"{entity}/{project}")
     
-    for run_dir in wandb_path.glob("run-*"):
-        config_file = run_dir / "files" / "config.yaml"
-        if config_file.exists():
-            with open(config_file, 'r') as f:
-                config = yaml.safe_load(f)
-                
-            # Extract relevant info
-            run_info = {
-                'run_id': run_dir.name.split('-')[-1],
-                'timestamp': run_dir.name.split('-')[1] + '_' + run_dir.name.split('-')[2],
-                'config': {}
-            }
-            
-            # Parse config
-            for key, value in config.items():
-                if isinstance(value, dict) and 'value' in value:
-                    run_info['config'][key] = value['value']
-            
-            runs.append(run_info)
-    
-    return runs
-
-
-def summarize_runs(runs: List[Dict]) -> None:
-    """Print summary of all runs."""
-    print("\n" + "="*80)
-    print("WANDB RUNS SUMMARY")
-    print("="*80)
-    
-    print(f"\nTotal runs found: {len(runs)}")
-    
-    # Group by dataset
-    by_dataset = defaultdict(list)
-    by_model = defaultdict(list)
-    
+    data = []
     for run in runs:
-        dataset = run['config'].get('dataset', 'unknown')
-        model = run['config'].get('model', 'unknown')
-        by_dataset[dataset].append(run)
-        by_model[model].append(run)
-    
-    print("\n--- By Dataset ---")
-    for dataset, dataset_runs in sorted(by_dataset.items()):
-        print(f"  {dataset}: {len(dataset_runs)} runs")
-    
-    print("\n--- By Model ---")
-    for model, model_runs in sorted(by_model.items()):
-        print(f"  {model}: {len(model_runs)} runs")
-    
-    print("\n--- Run Details ---")
-    for i, run in enumerate(runs, 1):
-        config = run['config']
-        print(f"\nRun {i} ({run['timestamp']}):")
-        print(f"  ID: {run['run_id']}")
-        print(f"  Dataset: {config.get('dataset', 'N/A')}")
-        print(f"  Model: {config.get('model', 'N/A')}")
-        print(f"  Epochs: {config.get('n_epochs', 'N/A')}")
-        print(f"  Learning Rate: {config.get('lr', 'N/A')}")
-        print(f"  Batch Size: {config.get('batch_size', 'N/A')}")
-        if 'buffer_size' in config:
-            print(f"  Buffer Size: {config['buffer_size']}")
+        # Extract config
+        config = {k: v for k, v in run.config.items() if not k.startswith('_')}
+        
+        # Extract summary metrics
+        summary = run.summary._json_dict
+        
+        # Combine
+        entry = {
+            'run_id': run.id,
+            'name': run.name,
+            'state': run.state,
+            **config,
+            **summary
+        }
+        data.append(entry)
+        
+    df = pd.DataFrame(data)
+    print(f"Fetched {len(df)} runs.")
+    return df
 
+def generate_table_1_main_results(df: pd.DataFrame, output_dir: str):
+    """
+    Generate Table 1: Main comparative results (Average Accuracy).
+    Compares: MLP, CfC, LTC, Random Sparse (with SGD and ER).
+    """
+    print("Generating Table 1...")
+    
+    # Filter relevant columns
+    cols = ['model', 'dataset', 'buffer_size', 'acc_mean', 'bwt_mean', 'forgetting']
+    # Ensure columns exist
+    cols = [c for c in cols if c in df.columns]
+    
+    if 'acc_mean' not in df.columns:
+        print("Warning: 'acc_mean' not found in data. Skipping Table 1.")
+        return
 
-def create_experiment_matrix_plot(runs: List[Dict], save_path: str = None):
+    # Group by Model, Dataset, Buffer Size
+    # We want to show: Split-MNIST, Split-CIFAR-10, TEP
+    # Models: mnistmlp, mnistcfc, mnistltc, etc.
+    
+    # Map model names to paper names
+    model_map = {
+        'mnistmlp': 'MLP',
+        'mnistcfc': 'NCP-CfC',
+        'mnistltc': 'NCP-LTC',
+        'mnist_random_sparse': 'CfC (Random)',
+        'resnet18': 'ResNet-18',
+        'cnn_cfc': 'ResNet-CfC',
+        'tepcfc': 'NCP-CfC',
+        'tepltc': 'NCP-LTC',
+        'tep_lstm': 'LSTM'
+    }
+    
+    df['Paper_Model'] = df['model'].map(model_map).fillna(df['model'])
+    
+    # Calculate mean and std over seeds
+    group_cols = ['dataset', 'Paper_Model', 'buffer_size']
+    # Handle missing buffer_size (e.g. for SGD)
+    df['buffer_size'] = df['buffer_size'].fillna(0)
+    
+    summary = df.groupby(group_cols)[['acc_mean', 'bwt_mean']].agg(['mean', 'std']).reset_index()
+    
+    # Format for LaTeX
+    summary['Accuracy'] = summary.apply(lambda x: f"{x[('acc_mean', 'mean')]:.2f} ± {x[('acc_mean', 'std')]:.2f}", axis=1)
+    summary['BWT'] = summary.apply(lambda x: f"{x[('bwt_mean', 'mean')]:.2f} ± {x[('bwt_mean', 'std')]:.2f}", axis=1)
+    
+    # Save CSV
+    summary.to_csv(f"{output_dir}/table_1_raw.csv")
+    
+    # Generate LaTeX table
+    latex_table = summary[['dataset', 'Paper_Model', 'buffer_size', 'Accuracy', 'BWT']].to_latex(index=False)
+    with open(f"{output_dir}/table_1.tex", 'w') as f:
+        f.write(latex_table)
+    print(f"Saved Table 1 to {output_dir}/table_1.tex")
+
+def plot_accuracy_over_tasks(df: pd.DataFrame, output_dir: str):
     """
-    Create a matrix visualization of experiments run.
+    Generate Figure: Accuracy over tasks (Learning Curve).
     """
-    datasets = sorted(set(r['config'].get('dataset', 'unknown') for r in runs))
-    models = sorted(set(r['config'].get('model', 'unknown') for r in runs))
+    print("Generating Accuracy Plots...")
     
-    # Create matrix: rows=datasets, cols=models
-    matrix = np.zeros((len(datasets), len(models)))
+    # We need history for this, which is expensive to fetch for all runs.
+    # We'll assume 'acc_mean' is the final accuracy.
+    # Ideally, we want the accuracy after each task.
+    # In Mammoth, this is usually logged as 'accuracy_x_y' or we can use the 'acc_mean' history.
     
-    for run in runs:
-        dataset = run['config'].get('dataset', 'unknown')
-        model = run['config'].get('model', 'unknown')
-        if dataset in datasets and model in models:
-            i = datasets.index(dataset)
-            j = models.index(model)
-            matrix[i, j] += 1
+    # For now, let's plot the final average accuracy bar chart as a proxy if history is missing
+    # Or better, let's try to fetch history for a subset of best runs.
     
-    # Plot
-    fig, ax = plt.subplots(figsize=(max(10, len(models)*1.5), max(6, len(datasets)*0.8)))
+    datasets = df['dataset'].unique()
     
-    sns.heatmap(matrix, annot=True, fmt='g', cmap='YlOrRd', 
-                xticklabels=models, yticklabels=datasets,
-                cbar_kws={'label': 'Number of Runs'}, ax=ax)
+    for dataset in datasets:
+        subset = df[df['dataset'] == dataset]
+        if subset.empty: continue
+        
+        plt.figure(figsize=(10, 6))
+        sns.barplot(data=subset, x='Paper_Model', y='acc_mean', hue='buffer_size')
+        plt.title(f"Average Accuracy on {dataset}")
+        plt.ylabel("Accuracy (%)")
+        plt.xlabel("Model")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(f"{output_dir}/accuracy_{dataset}.pdf")
+        plt.close()
+
+def plot_ablation_wiring(df: pd.DataFrame, output_dir: str):
+    """
+    Generate Figure 1: Ablation 1 - Wiring Structure.
+    Compares: AutoNCP vs Random Sparse vs Dense.
+    """
+    print("Generating Figure 1 (Wiring Ablation)...")
     
-    ax.set_xlabel('Model', fontsize=12, fontweight='bold')
-    ax.set_ylabel('Dataset', fontsize=12, fontweight='bold')
-    ax.set_title('Experiment Coverage Matrix', fontsize=14, fontweight='bold', pad=20)
+    # Filter for MNIST or TEP where we have these variants
+    # Models: mnistcfc (AutoNCP), mnist_random_sparse, mnistmlp (Dense - approx)
     
+    target_models = ['mnistcfc', 'mnist_random_sparse', 'mnistmlp']
+    subset = df[df['model'].isin(target_models) & (df['dataset'] == 'seq-mnist')]
+    
+    if subset.empty:
+        print("No data for Wiring Ablation.")
+        return
+        
+    # Map to readable names
+    name_map = {
+        'mnistcfc': 'AutoNCP',
+        'mnist_random_sparse': 'Random Sparse',
+        'mnistmlp': 'Dense (MLP)'
+    }
+    subset['Wiring'] = subset['model'].map(name_map)
+    
+    plt.figure(figsize=(8, 6))
+    sns.barplot(data=subset, x='Wiring', y='acc_mean', palette='viridis')
+    plt.title("Impact of Wiring Topology on Split-MNIST")
+    plt.ylabel("Average Accuracy (%)")
+    plt.xlabel("Wiring Strategy")
     plt.tight_layout()
-    
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        print(f"Saved experiment matrix to {save_path}")
-    
-    return fig
+    plt.savefig(f"{output_dir}/figure_1_wiring_ablation.pdf")
+    plt.close()
 
-
-def create_configuration_distribution_plots(runs: List[Dict], save_path: str = None):
+def plot_ablation_dynamics(df: pd.DataFrame, output_dir: str):
     """
-    Create plots showing distribution of hyperparameters.
+    Generate Figure 2: Ablation 2 - Temporal Dynamics.
+    Compares: CfC vs LTC vs LSTM.
     """
-    fig, axes = plt.subplots(2, 3, figsize=(18, 10))
-    axes = axes.flatten()
+    print("Generating Figure 2 (Dynamics Ablation)...")
     
-    # Learning rates
-    lrs = [r['config'].get('lr', None) for r in runs if r['config'].get('lr') is not None]
-    if lrs:
-        axes[0].hist(lrs, bins=20, edgecolor='black', alpha=0.7)
-        axes[0].set_xlabel('Learning Rate')
-        axes[0].set_ylabel('Count')
-        axes[0].set_title('Learning Rate Distribution')
-        axes[0].set_xscale('log')
+    target_models = ['mnistcfc', 'mnistltc', 'mnistlstm'] # Assuming mnistlstm exists
+    subset = df[df['model'].isin(target_models) & (df['dataset'] == 'seq-mnist')]
     
-    # Batch sizes
-    batch_sizes = [r['config'].get('batch_size', None) for r in runs if r['config'].get('batch_size') is not None]
-    if batch_sizes:
-        unique_bs = sorted(set(batch_sizes))
-        counts = [batch_sizes.count(bs) for bs in unique_bs]
-        axes[1].bar(range(len(unique_bs)), counts, edgecolor='black', alpha=0.7)
-        axes[1].set_xticks(range(len(unique_bs)))
-        axes[1].set_xticklabels(unique_bs)
-        axes[1].set_xlabel('Batch Size')
-        axes[1].set_ylabel('Count')
-        axes[1].set_title('Batch Size Distribution')
+    if subset.empty:
+        # Try TEP
+        target_models = ['tepcfc', 'tepltc', 'tep_lstm']
+        subset = df[df['model'].isin(target_models) & (df['dataset'] == 'tep')]
     
-    # Epochs
-    epochs = [r['config'].get('n_epochs', None) for r in runs if r['config'].get('n_epochs') is not None]
-    if epochs:
-        unique_ep = sorted(set(epochs))
-        counts = [epochs.count(ep) for ep in unique_ep]
-        axes[2].bar(range(len(unique_ep)), counts, edgecolor='black', alpha=0.7, color='coral')
-        axes[2].set_xticks(range(len(unique_ep)))
-        axes[2].set_xticklabels(unique_ep)
-        axes[2].set_xlabel('Number of Epochs')
-        axes[2].set_ylabel('Count')
-        axes[2].set_title('Training Epochs Distribution')
+    if subset.empty:
+        print("No data for Dynamics Ablation.")
+        return
+        
+    name_map = {
+        'mnistcfc': 'CfC', 'tepcfc': 'CfC',
+        'mnistltc': 'LTC', 'tepltc': 'LTC',
+        'mnistlstm': 'LSTM', 'tep_lstm': 'LSTM'
+    }
+    subset['Dynamics'] = subset['model'].map(name_map)
     
-    # Buffer sizes (for replay methods)
-    buffer_sizes = [r['config'].get('buffer_size', None) for r in runs if r['config'].get('buffer_size') is not None]
-    if buffer_sizes:
-        axes[3].hist(buffer_sizes, bins=20, edgecolor='black', alpha=0.7, color='green')
-        axes[3].set_xlabel('Buffer Size')
-        axes[3].set_ylabel('Count')
-        axes[3].set_title('Buffer Size Distribution (Replay Methods)')
-    
-    # Models
-    models = [r['config'].get('model', 'unknown') for r in runs]
-    unique_models = sorted(set(models))
-    counts = [models.count(m) for m in unique_models]
-    axes[4].barh(range(len(unique_models)), counts, edgecolor='black', alpha=0.7, color='purple')
-    axes[4].set_yticks(range(len(unique_models)))
-    axes[4].set_yticklabels(unique_models)
-    axes[4].set_xlabel('Count')
-    axes[4].set_title('Model Distribution')
-    
-    # Datasets
-    datasets = [r['config'].get('dataset', 'unknown') for r in runs]
-    unique_datasets = sorted(set(datasets))
-    counts = [datasets.count(d) for d in unique_datasets]
-    axes[5].barh(range(len(unique_datasets)), counts, edgecolor='black', alpha=0.7, color='orange')
-    axes[5].set_yticks(range(len(unique_datasets)))
-    axes[5].set_yticklabels(unique_datasets)
-    axes[5].set_xlabel('Count')
-    axes[5].set_title('Dataset Distribution')
-    
-    plt.suptitle('Hyperparameter and Configuration Distributions', 
-                 fontsize=16, fontweight='bold', y=1.00)
+    plt.figure(figsize=(8, 6))
+    sns.barplot(data=subset, x='Dynamics', y='acc_mean', palette='magma')
+    plt.title("Impact of Temporal Dynamics")
+    plt.ylabel("Average Accuracy (%)")
+    plt.xlabel("Cell Type")
     plt.tight_layout()
-    
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        print(f"Saved configuration distributions to {save_path}")
-    
-    return fig
+    plt.savefig(f"{output_dir}/figure_2_dynamics_ablation.pdf")
+    plt.close()
 
-
-def create_timeline_plot(runs: List[Dict], save_path: str = None):
+def plot_tau_distribution(df: pd.DataFrame, output_dir: str):
     """
-    Create timeline of experiments.
+    Generate Tau Distribution Plot.
+    Requires 'tau_mean' and 'tau_std' or raw tau values to be logged.
     """
-    # Parse timestamps
-    run_times = []
-    for run in runs:
-        timestamp_str = run['timestamp']
-        # Format: YYYYMMDD_HHMMSS
-        run_times.append(timestamp_str)
+    print("Generating Tau Distribution Plot...")
+    # This is tricky without raw data. We'll check if there's a summary metric for bimodality.
     
-    run_times_sorted = sorted(run_times)
-    
-    fig, ax = plt.subplots(figsize=(14, 6))
-    
-    # Plot each run as a point
-    x = list(range(len(run_times_sorted)))
-    y = [1] * len(run_times_sorted)
-    
-    ax.scatter(x, y, s=100, alpha=0.6)
-    
-    # Annotate with dates
-    step = max(1, len(run_times_sorted) // 10)  # Show ~10 labels
-    for i in range(0, len(run_times_sorted), step):
-        ax.annotate(run_times_sorted[i][:8], (x[i], y[i]), 
-                   rotation=45, ha='right', fontsize=8)
-    
-    ax.set_xlabel('Run Number', fontsize=12)
-    ax.set_ylabel('')
-    ax.set_title('Experiment Timeline', fontsize=14, fontweight='bold')
-    ax.set_yticks([])
-    ax.grid(axis='x', alpha=0.3)
-    
-    plt.tight_layout()
-    
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        print(f"Saved timeline to {save_path}")
-    
-    return fig
+    if 'tau_bimodality_coeff' in df.columns:
+        plt.figure(figsize=(8, 6))
+        sns.boxplot(data=df, x='Paper_Model', y='tau_bimodality_coeff')
+        plt.axhline(y=0.555, color='r', linestyle='--', label='Bimodality Threshold')
+        plt.title("Tau Distribution Bimodality Coefficient")
+        plt.ylabel("BC")
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f"{output_dir}/tau_bimodality.pdf")
+        plt.close()
+    else:
+        print("Metric 'tau_bimodality_coeff' not found. Skipping Tau Plot.")
 
-
-def generate_report(runs: List[Dict], output_dir: str = "analysis/results"):
+def generate_compute_cost_table(df: pd.DataFrame, output_dir: str):
     """
-    Generate comprehensive analysis report.
+    Generate Table: Compute Cost (Runtime and Parameters).
     """
-    os.makedirs(output_dir, exist_ok=True)
+    print("Generating Compute Cost Table...")
     
-    print("\n" + "="*80)
-    print("GENERATING ANALYSIS REPORT")
-    print("="*80)
+    if '_runtime' not in df.columns:
+        print("Warning: '_runtime' not found. Skipping Compute Cost Table.")
+        return
+        
+    # Group by Model
+    # We want to see if CfC is slower than MLP/LSTM
     
-    # Summary
-    summarize_runs(runs)
+    # Map model names
+    model_map = {
+        'mnistmlp': 'MLP',
+        'mnistcfc': 'NCP-CfC',
+        'mnistltc': 'NCP-LTC',
+        'mnist_random_sparse': 'CfC (Random)',
+        'tepcfc': 'NCP-CfC',
+        'tepltc': 'NCP-LTC',
+        'tep_lstm': 'LSTM'
+    }
     
-    # Create visualizations
-    print("\nGenerating visualizations...")
+    df['Paper_Model'] = df['model'].map(model_map).fillna(df['model'])
     
-    create_experiment_matrix_plot(runs, 
-                                  save_path=f"{output_dir}/experiment_matrix.png")
+    # Calculate mean runtime
+    summary = df.groupby(['dataset', 'Paper_Model'])['_runtime'].agg(['mean', 'std']).reset_index()
+    summary['Runtime (s)'] = summary.apply(lambda x: f"{x['mean']:.0f} ± {x['std']:.0f}", axis=1)
     
-    create_configuration_distribution_plots(runs, 
-                                           save_path=f"{output_dir}/configuration_distributions.png")
-    
-    create_timeline_plot(runs, 
-                        save_path=f"{output_dir}/experiment_timeline.png")
-    
-    # Generate text report
-    report_path = f"{output_dir}/analysis_report.txt"
-    with open(report_path, 'w') as f:
-        f.write("="*80 + "\n")
-        f.write("CONTINUAL LEARNING EXPERIMENTS ANALYSIS\n")
-        f.write("="*80 + "\n\n")
-        
-        f.write(f"Total Runs: {len(runs)}\n\n")
-        
-        # Group by dataset
-        by_dataset = defaultdict(list)
-        by_model = defaultdict(list)
-        
-        for run in runs:
-            dataset = run['config'].get('dataset', 'unknown')
-            model = run['config'].get('model', 'unknown')
-            by_dataset[dataset].append(run)
-            by_model[model].append(run)
-        
-        f.write("DATASETS TESTED:\n")
-        f.write("-" * 40 + "\n")
-        for dataset, dataset_runs in sorted(by_dataset.items()):
-            f.write(f"  {dataset}: {len(dataset_runs)} runs\n")
-        
-        f.write("\nMODELS TESTED:\n")
-        f.write("-" * 40 + "\n")
-        for model, model_runs in sorted(by_model.items()):
-            f.write(f"  {model}: {len(model_runs)} runs\n")
-        
-        f.write("\nKEY OBSERVATIONS:\n")
-        f.write("-" * 40 + "\n")
-        f.write("1. Most experiments focused on:\n")
-        f.write(f"   - Primary dataset: {max(by_dataset.items(), key=lambda x: len(x[1]))[0]}\n")
-        f.write(f"   - Primary model: {max(by_model.items(), key=lambda x: len(x[1]))[0]}\n")
-        
-        f.write("\n2. Experiment coverage:\n")
-        f.write(f"   - Unique datasets: {len(by_dataset)}\n")
-        f.write(f"   - Unique models: {len(by_model)}\n")
-        
-        f.write("\n3. GAPS AND RECOMMENDATIONS:\n")
-        f.write("-" * 40 + "\n")
-        
-        # Check for CfC experiments
-        has_cfc = any('cfc' in run['config'].get('model', '').lower() or 
-                     'ncp' in run['config'].get('model', '').lower() 
-                     for run in runs)
-        
-        if not has_cfc:
-            f.write("   ⚠️  NO CfC/NCP EXPERIMENTS FOUND!\n")
-            f.write("      This is the main focus of the project.\n")
-            f.write("      Action: Run experiments with corrected CfC backbones.\n\n")
-        
-        # Check for statistical rigor
-        config_keys = set()
-        for run in runs:
-            config_keys.update(run['config'].keys())
-        
-        if 'seed' not in config_keys or all(run['config'].get('seed') is None for run in runs):
-            f.write("   ⚠️  NO RANDOM SEEDS DETECTED!\n")
-            f.write("      Multiple seeds needed for statistical validity.\n")
-            f.write("      Action: Run each experiment with seeds 0-9.\n\n")
-        
-        # Check for baselines
-        baseline_models = {'sgd', 'er', 'ewc', 'lwf'}
-        found_baselines = set(by_model.keys()) & baseline_models
-        missing_baselines = baseline_models - found_baselines
-        
-        if missing_baselines:
-            f.write(f"   ⚠️  MISSING BASELINE MODELS: {', '.join(missing_baselines)}\n")
-            f.write("      Action: Run these baselines for fair comparison.\n\n")
-        
-        f.write("\n4. NEXT STEPS:\n")
-        f.write("-" * 40 + "\n")
-        f.write("   1. Fix and test CfC/NCP implementations\n")
-        f.write("   2. Run systematic experiments with multiple seeds\n")
-        f.write("   3. Include all relevant baselines\n")
-        f.write("   4. Perform ablation studies (sparse vs. dense, CfC vs. RNN)\n")
-        f.write("   5. Collect performance metrics (accuracy, BWT, FWT, forgetting)\n")
-    
-    print(f"\nText report saved to {report_path}")
-    
-    print("\n" + "="*80)
-    print("ANALYSIS COMPLETE")
-    print("="*80)
-    print(f"\nResults saved to: {output_dir}/")
-
+    # Save
+    latex_table = summary[['dataset', 'Paper_Model', 'Runtime (s)']].to_latex(index=False)
+    with open(f"{output_dir}/table_compute_cost.tex", 'w') as f:
+        f.write(latex_table)
+    print(f"Saved Compute Cost Table to {output_dir}/table_compute_cost.tex")
 
 def main():
-    parser = argparse.ArgumentParser(description='Analyze WandB continual learning experiments')
-    parser.add_argument('--wandb_dir', type=str, 
-                       default='mammoth/wandb',
-                       help='Path to WandB directory')
-    parser.add_argument('--output_dir', type=str,
-                       default='analysis/results',
-                       help='Directory to save analysis outputs')
+    parser = argparse.ArgumentParser(description='Generate Paper Figures and Tables')
+    parser.add_argument('--entity', type=str, required=True, help='WandB Entity')
+    parser.add_argument('--project', type=str, required=True, help='WandB Project')
+    parser.add_argument('--output_dir', type=str, default='analysis/results', help='Output directory')
     
     args = parser.parse_args()
     
-    # Parse runs
-    print(f"Parsing WandB runs from: {args.wandb_dir}")
-    runs = parse_local_wandb_runs(args.wandb_dir)
+    os.makedirs(args.output_dir, exist_ok=True)
     
-    if not runs:
-        print("No runs found!")
-        print("Note: Actual metrics may require WandB API access.")
-        print("This script currently only parses local config files.")
+    # 1. Fetch Data
+    df = fetch_runs(args.entity, args.project)
+    
+    if df.empty:
+        print("No runs found. Exiting.")
         return
+        
+    # 2. Generate Table 1
+    generate_table_1_main_results(df, args.output_dir)
     
-    # Generate report
-    generate_report(runs, args.output_dir)
-
+    # 3. Generate Compute Cost Table
+    generate_compute_cost_table(df, args.output_dir)
+    
+    # 4. Generate Figures
+    plot_accuracy_over_tasks(df, args.output_dir)
+    plot_ablation_wiring(df, args.output_dir)
+    plot_ablation_dynamics(df, args.output_dir)
+    plot_tau_distribution(df, args.output_dir)
+    
+    print(f"\nAnalysis complete. Results saved to {args.output_dir}")
 
 if __name__ == '__main__':
     main()
