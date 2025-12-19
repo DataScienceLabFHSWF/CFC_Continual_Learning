@@ -456,6 +456,19 @@ def extend_args(args, dataset):
         logging.info(f'Logging to wandb: {args.wandb_entity}/{args.wandb_project}')
         args.nowand = 0
 
+    # Inject input_size and input_channels for backbones that require them (e.g. HOPE)
+    if not hasattr(args, 'input_size') or args.input_size is None:
+        if hasattr(dataset, 'SIZE'):
+            args.input_size = dataset.SIZE[0]
+    
+    if not hasattr(args, 'input_channels') or args.input_channels is None:
+        if hasattr(dataset, 'MEAN'):
+            args.input_channels = len(dataset.MEAN)
+        elif 'mnist' in args.dataset.lower():
+            args.input_channels = 1
+        else:
+            args.input_channels = 3
+
 
 def initialize(
     args=None,

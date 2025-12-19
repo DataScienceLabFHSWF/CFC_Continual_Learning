@@ -1,0 +1,77 @@
+explicit_experiments:
+- args:
+    batch_size: 32
+    hope_lr: 0.001
+    input_channels: 3
+    input_size: 32
+    lr: 0.001
+    n_epochs: 50
+  backbone: hope
+  dataset: seq-cifar10
+  model: hope
+  seeds:
+  - 0
+- args:
+    batch_size: 32
+    buffer_size: 500
+    lr: 0.03
+    n_epochs: 50
+  backbone: resnet18_vanilla
+  dataset: seq-cifar10
+  model: er
+  seeds:
+  - 0
+- args:
+    batch_size: 32
+    hope_lr: 0.001
+    input_channels: 1
+    input_size: 28
+    lr: 0.001
+    n_epochs: 10
+  backbone: hope
+  dataset: seq-mnist
+  model: hope
+  seeds:
+  - 0
+- args:
+    batch_size: 32
+    buffer_size: 200
+    lr: 0.03
+    n_epochs: 10
+  backbone: mnistmlp
+  dataset: seq-mnist
+  model: er
+  seeds:
+  - 0
+- args:
+    batch_size: 32
+    hope_lr: 0.001
+    input_channels: 3
+    input_size: 32
+    lr: 0.001
+    n_epochs: 50
+  backbone: hope
+  dataset: seq-cifar100
+  model: hope
+  seeds:
+  - 0
+- args:
+    batch_size: 32
+    buffer_size: 500
+    lr: 0.03
+    n_epochs: 50
+  backbone: resnet18_vanilla
+  dataset: seq-cifar100
+  model: er
+  seeds:
+  - 0
+global_args:
+  num_workers: 4
+  wandb_entity: fneubuerger
+  wandb_project: mammoth
+gpus:
+- 0
+- 0
+- 1
+- 1
+venv_path: /home/fneubuerger/CFC_Continual_Learning/.venv/bin/activate

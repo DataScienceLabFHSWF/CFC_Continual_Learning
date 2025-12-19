@@ -125,7 +125,7 @@ cifar10:
   
   baselines:
     # Standard CNN backbone (ResNet-18 is default for CIFAR in Mammoth)
-    - backbone: resnet18
+    - backbone: resnet18_vanilla
       models:
         - name: sgd
           lr: 0.1

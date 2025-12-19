@@ -1,0 +1,84 @@
+Command: CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source /home/fneubuerger/CFC_Continual_Learning/.venv/bin/activate && python utils/main.py --dataset seq-cifar10 --model hope --backbone hope --num_workers 4 --n_epochs 50 --batch_size 32 --buffer_size 500 --hope_lr 0.001 --lr 0.001 --seed 0
+GPU: 0
+Duration: 7.58s
+Exit Code: 2
+
+=== STDOUT ===
+[INFO] 19-Dec-25 09:26:12 - Running Mammoth! on aconcagua-G294-Z21-AAP2-000. 
+[WARNING] 19-Dec-25 09:26:12 - Warning: python-dotenv not installed. Ignoring .env file.
+[WARNING] 19-Dec-25 09:26:17 - Error in model xder-rpc-casper
+[WARNING] 19-Dec-25 09:26:17 - No module named 'xitorch'
+[WARNING] 19-Dec-25 09:26:17 - Error in model lws
+[WARNING] 19-Dec-25 09:26:17 - kmeans_pytorch not installed. Please run `pip install kmeans-pytorch`.
+[WARNING] 19-Dec-25 09:26:17 - Error in model cgil
+[WARNING] 19-Dec-25 09:26:17 - Please install the CLIP package by running: pip install git+https://github.com/openai/CLIP.git
+[WARNING] 19-Dec-25 09:26:17 - Error in model l2p
+[WARNING] 19-Dec-25 09:26:17 - No module named 'backbone.vit'
+[WARNING] 19-Dec-25 09:26:17 - Error in model dap
+[WARNING] 19-Dec-25 09:26:17 - Error in model clip
+[WARNING] 19-Dec-25 09:26:17 - Error in model icarl-casper
+[WARNING] 19-Dec-25 09:26:17 - Error in model second-stage-starprompt
+[WARNING] 19-Dec-25 09:26:17 - Error in model starprompt
+[WARNING] 19-Dec-25 09:26:17 - Please install the CLIP package by running: pip install git+https://github.com/openai/CLIP.git (requires also `huggingface-hub`)
+[WARNING] 19-Dec-25 09:26:17 - Error in model coda-prompt
+[WARNING] 19-Dec-25 09:26:17 - Error in model second-order
+[WARNING] 19-Dec-25 09:26:17 - Error in model derpp-casper
+[WARNING] 19-Dec-25 09:26:17 - Error in model first-stage-starprompt
+[WARNING] 19-Dec-25 09:26:18 - Error in model slca
+[WARNING] 19-Dec-25 09:26:18 - Error in model llava
+[WARNING] 19-Dec-25 09:26:18 - Please install the HuggingFace Transformers package by running: pip install transformers
+[WARNING] 19-Dec-25 09:26:18 - Error in model dualprompt
+[WARNING] 19-Dec-25 09:26:18 - Error in model ranpac
+[WARNING] 19-Dec-25 09:26:18 - Error in model er-ace-casper
+[INFO] 19-Dec-25 09:26:18 - Trying to load default configuration for model hope but no configuration file found in None.
+
+=== STDERR ===
+usage: main.py [--loadcheck LOADCHECK]
+               [--dataset {seq-cifar100,seq-resisc45,seq-cifar10-224,seq-eurosat-rgb,seq-cub200,seq-cub200-rs,tennessee-eastman,tennessee-eastman-joint,seq-imagenet-r,seq-cifar10-224-rs,seq-cars196,mnist-360,seq-mit67,seq-cropdisease,seq-celeba,seq-isic,rot-mnist,seq-tinyimg,seq-mnist,seq-cifar100-224-rs,seq-cifar100-224,seq-tinyimg-r,perm-mnist,seq-cifar10,seq-chestx}]
+               [--model {xder-rpc-casper,derpp-cscct,er-tricks,hope,spr,xder-rpc-cscct,lws,cgil,l2p,gdumb,puridiver,dap,agem,pnn,clip,cnll,icarl-casper,second-stage-starprompt,starprompt,gem,icarl-lider,coda-prompt,lwf-mc,ewc-on,moe-adapters,second-order,er-ace,derpp-star,er-star,twf,gdumb-lider,gss,derpp-casper,icarl,xder-ce,er-ace-aer-abs,si,first-stage-starprompt,lucir,rpc,lwf,er-ace-tricks,er-ace-star,attriclip,slca,mer,bic,der,hal,er,llava,dualprompt,fdr,sgd,joint-gcl,er-ace-cscct,xder-rpc,xder-rpc-star,idefics,derpp,joint,ranpac,er-ace-casper,agem-r,derpp-lider,icarl-cscct,zscl,xder,ccic,er-ace-lider}]
+               [--backbone {mnistmlp-pnn,hope,efficientnet,tepltc,tepcfc,teplstm,tep-dense-cfc,preact-resnet18,resnet18,resnet18-7x7-pt,reduced-resnet18,resnet34,resnet18-spr,tep-random-sparse,cnn-random-sparse,cnn-ltc,resnet50,resnet50-pt,resnet32,cnn-cfc,cnn-dense-cfc,resnet18-vanilla,mnistmlp,tepmlp,mnistltc,mnist-random-sparse,resnet18-pnn,mnistcfc,mnist-dense-cfc}]
+               [--load_best_args]
+               [--dataset_config {online,cnll,er_ace,test,default}]
+               [--model_config MODEL_CONFIG] [-h]
+               [--transform_type TRANSFORM_TYPE] [--input_size INPUT_SIZE]
+               [--input_channels INPUT_CHANNELS] [--seed SEED]
+               [--permute_classes PERMUTE_CLASSES] [--base_path BASE_PATH]
+               [--checkpoint_path CHECKPOINT_PATH]
+               [--results_path RESULTS_PATH] [--device DEVICE] [--notes NOTES]
+               [--eval_epochs EVAL_EPOCHS] [--non_verbose NON_VERBOSE]
+               [--disable_log DISABLE_LOG] [--num_workers NUM_WORKERS]
+               [--enable_other_metrics ENABLE_OTHER_METRICS]
+               [--enable_advanced_metrics ENABLE_ADVANCED_METRICS]
+               [--enable_tau_monitor ENABLE_TAU_MONITOR]
+               [--tau_log_interval TAU_LOG_INTERVAL] [--debug_mode DEBUG_MODE]
+               [--inference_only INFERENCE_ONLY] [-O {0,1,2,3}]
+               [--distributed {no,dp,ddp}] [--savecheck {last,task}]
+               [--save_checkpoint_mode {old_pickle,safe}]
+               [--ckpt_name CKPT_NAME] [--start_from START_FROM]
+               [--stop_after STOP_AFTER]
+               [--save_after_interrupt SAVE_AFTER_INTERRUPT]
+               [--wandb_name WANDB_NAME] [--wandb_entity WANDB_ENTITY]
+               [--wandb_project WANDB_PROJECT] --lr LR
+               [--batch_size BATCH_SIZE] [--label_perc_by_task LABEL_PERC]
+               [--label_perc_by_class LABEL_PERC_BY_CLASS] [--joint {0,1}]
+               [--eval_future EVAL_FUTURE]
+               [--custom_task_order CUSTOM_TASK_ORDER]
+               [--custom_class_order CUSTOM_CLASS_ORDER]
+               [--validation VALIDATION]
+               [--validation_mode {complete,current}]
+               [--fitting_mode {epochs,iters,time,early_stopping}]
+               [--early_stopping_patience EARLY_STOPPING_PATIENCE]
+               [--early_stopping_metric {loss,accuracy}]
+               [--early_stopping_freq EARLY_STOPPING_FREQ]
+               [--early_stopping_epsilon EARLY_STOPPING_EPSILON]
+               [--n_epochs N_EPOCHS] [--n_iters N_ITERS]
+               [--optimizer {sgd,adam,adamw}] [--optim_wd OPTIM_WD]
+               [--optim_mom OPTIM_MOM] [--optim_nesterov OPTIM_NESTEROV]
+               [--drop_last DROP_LAST] [--lr_scheduler LR_SCHEDULER]
+               [--scheduler_mode {epoch,iter}]
+               [--lr_milestones LR_MILESTONES [LR_MILESTONES ...]]
+               [--sched_multistep_lr_gamma SCHED_MULTISTEP_LR_GAMMA]
+               [--noise_type NOISE_TYPE] [--noise_rate NOISE_RATE]
+               [--disable_noisy_labels_cache DISABLE_NOISY_LABELS_CACHE]
+               [--cache_path_noisy_labels CACHE_PATH_NOISY_LABELS]
+main.py: error: unrecognized arguments: --buffer_size 500 --hope_lr 0.001

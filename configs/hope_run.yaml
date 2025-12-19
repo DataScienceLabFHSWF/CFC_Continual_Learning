@@ -1,0 +1,13 @@
+
+datasets: ['seq-cifar10']
+models: ['hope']
+backbones: ['hope']
+seeds: [0]
+global_args:
+  n_epochs: 50
+  batch_size: 32
+  num_workers: 4
+model_args:
+  hope:
+    hope_lr: 0.001
+    lr: 0.001

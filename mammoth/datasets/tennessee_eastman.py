@@ -101,7 +101,7 @@ class TennesseeEastmanDataset(Dataset):
         print(f"Loaded {len(self.windows)} windows for fault IDs {self.fault_ids} ({mode})")
     
     def __len__(self):
-        return len(self.windows)
+        return len(self.data)
     
     def __getitem__(self, idx):
         """
@@ -110,8 +110,8 @@ class TennesseeEastmanDataset(Dataset):
             label: fault class (0-21)
             window: same as first return (for compatibility with Mammoth)
         """
-        window = torch.from_numpy(self.windows[idx])
-        label = torch.tensor(self.labels[idx], dtype=torch.long)
+        window = self.data[idx]
+        label = self.targets[idx]
         
         return window, label, window
 

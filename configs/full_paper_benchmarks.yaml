@@ -151,7 +151,7 @@ cifar10_baselines:
   batch_size: 64
   
   architectures:
-    - backbone: resnet18
+    - backbone: resnet18_vanilla
       models:
         - name: sgd
           lr: 0.03

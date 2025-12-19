@@ -1,0 +1,13 @@
+Command: CUDA_VISIBLE_DEVICES=0 cd ./mammoth && python utils/main.py --dataset seq-cifar10 --model hope --backbone hope --num_workers 4 --n_epochs 50 --batch_size 32 --buffer_size 500 --hope_lr 0.001 --lr 0.001 --seed 0
+GPU: 0
+Duration: 0.03s
+Exit Code: 1
+
+=== STDOUT ===
+
+=== STDERR ===
+Traceback (most recent call last):
+  File "/home/fneubuerger/CFC_Continual_Learning/mammoth/utils/main.py", line 19, in <module>
+    import numpy  # noqa
+    ^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'numpy'

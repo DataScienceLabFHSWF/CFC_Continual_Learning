@@ -61,6 +61,37 @@ class BenchmarkRunner:
         python_cmd = self.config.get('python_cmd', 'python')
         venv_path = self.config.get('venv_path', None)
         
+        # Check for explicit experiments list
+        explicit_experiments = self.config.get('explicit_experiments', None)
+        if explicit_experiments:
+            for exp_conf in explicit_experiments:
+                # Expand seeds if list
+                exp_seeds = exp_conf.get('seeds', [0])
+                if isinstance(exp_seeds, int):
+                    exp_seeds = [exp_seeds]
+                    
+                for seed in exp_seeds:
+                    exp = {
+                        'dataset': exp_conf['dataset'],
+                        'model': exp_conf['model'],
+                        'backbone': exp_conf.get('backbone', None),
+                        'seed': seed,
+                        'base_path': base_path,
+                        'python_cmd': python_cmd,
+                        'venv_path': venv_path,
+                        'traditional_ml': exp_conf.get('traditional_ml', False),
+                        'args': {}
+                    }
+                    
+                    # Merge arguments
+                    exp['args'].update(global_args)
+                    exp['args'].update(exp_conf.get('args', {}))
+                    exp['args']['seed'] = seed
+                    
+                    experiments.append(exp)
+            
+            return experiments
+
         # Get experiment grid
         datasets = self.config.get('datasets', ['seq-mnist'])
         models = self.config.get('models', ['sgd'])
@@ -232,29 +263,32 @@ class BenchmarkRunner:
         # Run the experiment
         start_time = time.time()
         
+        output_file = self.run_dir / f"{exp_name}.log"
+        
         try:
-            # Use bash to execute the command
-            result = subprocess.run(
-                cmd,
-                shell=True,
-                executable='/bin/bash',
-                capture_output=True,
-                text=True
-            )
-            
-            duration = time.time() - start_time
-            
-            # Save output
-            output_file = self.run_dir / f"{exp_name}_output.txt"
             with open(output_file, 'w') as f:
                 f.write(f"Command: {cmd}\n")
                 f.write(f"GPU: {gpu_id}\n")
+                f.write("="*80 + "\n")
+                f.flush()
+                
+                # Use bash to execute the command, streaming output to file
+                result = subprocess.run(
+                    cmd,
+                    shell=True,
+                    executable='/bin/bash',
+                    stdout=f,
+                    stderr=subprocess.STDOUT,
+                    text=True
+                )
+            
+            duration = time.time() - start_time
+            
+            # Append summary to the log
+            with open(output_file, 'a') as f:
+                f.write(f"\n{'='*80}\n")
                 f.write(f"Duration: {duration:.2f}s\n")
-                f.write(f"Exit Code: {result.returncode}\n\n")
-                f.write("=== STDOUT ===\n")
-                f.write(result.stdout)
-                f.write("\n=== STDERR ===\n")
-                f.write(result.stderr)
+                f.write(f"Exit Code: {result.returncode}\n")
             
             success = result.returncode == 0
             
@@ -262,9 +296,7 @@ class BenchmarkRunner:
             if not success:
                 print(f"\n{'!'*80}")
                 print(f"FAILED: {exp_name} (exit code: {result.returncode})")
-                print(f"{'!'*80}")
-                print("STDERR:")
-                print(result.stderr[-2000:] if len(result.stderr) > 2000 else result.stderr)
+                print(f"See log: {output_file}")
                 print(f"{'!'*80}\n")
             
             return {

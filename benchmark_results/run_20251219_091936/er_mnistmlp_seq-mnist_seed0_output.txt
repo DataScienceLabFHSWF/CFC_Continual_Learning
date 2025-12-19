@@ -1,0 +1,30 @@
+Command: CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source /home/fneubuerger/CFC_Continual_Learning/.venv/bin/activate && python utils/main.py --dataset seq-mnist --model er --backbone mnistmlp --num_workers 4 --n_epochs 10 --batch_size 32 --buffer_size 200 --lr 0.03 --seed 0
+GPU: 0
+Duration: 5.90s
+Exit Code: 1
+
+=== STDOUT ===
+[INFO] 19-Dec-25 09:19:56 - Running Mammoth! on aconcagua-G294-Z21-AAP2-000. 
+[WARNING] 19-Dec-25 09:19:56 - Warning: python-dotenv not installed. Ignoring .env file.
+
+=== STDERR ===
+Traceback (most recent call last):
+  File "/home/fneubuerger/CFC_Continual_Learning/mammoth/utils/main.py", line 566, in <module>
+    main()
+  File "/home/fneubuerger/CFC_Continual_Learning/mammoth/utils/main.py", line 558, in main
+    from utils.training import train
+  File "/home/fneubuerger/CFC_Continual_Learning/mammoth/utils/training.py", line 17, in <module>
+    from datasets import get_dataset
+  File "/home/fneubuerger/CFC_Continual_Learning/mammoth/datasets/__init__.py", line 176, in <module>
+    importlib.import_module(f'datasets.{file[:-3]}')
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "/home/fneubuerger/CFC_Continual_Learning/mammoth/datasets/seq_cifar100.py", line 15, in <module>
+    from backbone.ResNetBlock import resnet18
+  File "/home/fneubuerger/CFC_Continual_Learning/mammoth/backbone/__init__.py", line 235, in <module>
+    importlib.import_module(f'backbone.{file[:-3]}')
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "/home/fneubuerger/CFC_Continual_Learning/mammoth/backbone/hope.py", line 301, in <module>
+    register_backbone("hope", hope)
+TypeError: register_backbone() takes 1 positional argument but 2 were given
