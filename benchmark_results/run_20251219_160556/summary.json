@@ -1,0 +1,390 @@
+{
+  "config_path": "configs/tep_benchmark.yaml",
+  "total_experiments": 42,
+  "num_parallel": 4,
+  "gpus": [
+    0,
+    1
+  ],
+  "results": [
+    {
+      "name": "xgboost_tennessee-eastman_seed0",
+      "status": "failed",
+      "duration": 0.03859567642211914,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python ../tep_gradient_boosting.py --dataset tennessee-eastman --model xgboost --seed 0 --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --output_dir tep_ml_results --n_estimators 100 --max_depth 6 --learning_rate 0.1",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/xgboost_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "xgboost_tennessee-eastman_seed42",
+      "status": "failed",
+      "duration": 0.037145137786865234,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python ../tep_gradient_boosting.py --dataset tennessee-eastman --model xgboost --seed 42 --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --output_dir tep_ml_results --n_estimators 100 --max_depth 6 --learning_rate 0.1",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/xgboost_tennessee-eastman_seed42.log"
+    },
+    {
+      "name": "xgboost_tennessee-eastman_seed123",
+      "status": "failed",
+      "duration": 0.0348660945892334,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python ../tep_gradient_boosting.py --dataset tennessee-eastman --model xgboost --seed 123 --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --output_dir tep_ml_results --n_estimators 100 --max_depth 6 --learning_rate 0.1",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/xgboost_tennessee-eastman_seed123.log"
+    },
+    {
+      "name": "lightgbm_tennessee-eastman_seed0",
+      "status": "failed",
+      "duration": 0.03638148307800293,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python ../tep_gradient_boosting.py --dataset tennessee-eastman --model lightgbm --seed 0 --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --output_dir tep_ml_results --n_estimators 100 --max_depth 6 --learning_rate 0.1",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/lightgbm_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "lightgbm_tennessee-eastman_seed42",
+      "status": "failed",
+      "duration": 0.041589975357055664,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python ../tep_gradient_boosting.py --dataset tennessee-eastman --model lightgbm --seed 42 --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --output_dir tep_ml_results --n_estimators 100 --max_depth 6 --learning_rate 0.1",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/lightgbm_tennessee-eastman_seed42.log"
+    },
+    {
+      "name": "lightgbm_tennessee-eastman_seed123",
+      "status": "failed",
+      "duration": 0.03770327568054199,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python ../tep_gradient_boosting.py --dataset tennessee-eastman --model lightgbm --seed 123 --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --output_dir tep_ml_results --n_estimators 100 --max_depth 6 --learning_rate 0.1",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/lightgbm_tennessee-eastman_seed123.log"
+    },
+    {
+      "name": "random_forest_tennessee-eastman_seed0",
+      "status": "failed",
+      "duration": 0.0378267765045166,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python ../tep_gradient_boosting.py --dataset tennessee-eastman --model random_forest --seed 0 --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --output_dir tep_ml_results --n_estimators 100 --max_depth 10",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/random_forest_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "random_forest_tennessee-eastman_seed42",
+      "status": "failed",
+      "duration": 0.035002708435058594,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python ../tep_gradient_boosting.py --dataset tennessee-eastman --model random_forest --seed 42 --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --output_dir tep_ml_results --n_estimators 100 --max_depth 10",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/random_forest_tennessee-eastman_seed42.log"
+    },
+    {
+      "name": "random_forest_tennessee-eastman_seed123",
+      "status": "failed",
+      "duration": 0.03397369384765625,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python ../tep_gradient_boosting.py --dataset tennessee-eastman --model random_forest --seed 123 --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --output_dir tep_ml_results --n_estimators 100 --max_depth 10",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/random_forest_tennessee-eastman_seed123.log"
+    },
+    {
+      "name": "gradient_boosting_tennessee-eastman_seed0",
+      "status": "failed",
+      "duration": 0.035556793212890625,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python ../tep_gradient_boosting.py --dataset tennessee-eastman --model gradient_boosting --seed 0 --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --output_dir tep_ml_results --n_estimators 100 --max_depth 6 --learning_rate 0.1",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/gradient_boosting_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "gradient_boosting_tennessee-eastman_seed42",
+      "status": "failed",
+      "duration": 0.03581047058105469,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python ../tep_gradient_boosting.py --dataset tennessee-eastman --model gradient_boosting --seed 42 --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --output_dir tep_ml_results --n_estimators 100 --max_depth 6 --learning_rate 0.1",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/gradient_boosting_tennessee-eastman_seed42.log"
+    },
+    {
+      "name": "gradient_boosting_tennessee-eastman_seed123",
+      "status": "failed",
+      "duration": 0.033870697021484375,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python ../tep_gradient_boosting.py --dataset tennessee-eastman --model gradient_boosting --seed 123 --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --output_dir tep_ml_results --n_estimators 100 --max_depth 6 --learning_rate 0.1",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/gradient_boosting_tennessee-eastman_seed123.log"
+    },
+    {
+      "name": "sgd_tepcfc_tennessee-eastman_seed0",
+      "status": "failed",
+      "duration": 7.615396738052368,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model sgd --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 0",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/sgd_tepcfc_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "sgd_tepcfc_tennessee-eastman_seed42",
+      "status": "failed",
+      "duration": 7.59935998916626,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model sgd --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 42",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/sgd_tepcfc_tennessee-eastman_seed42.log"
+    },
+    {
+      "name": "sgd_tepcfc_tennessee-eastman_seed123",
+      "status": "failed",
+      "duration": 7.597546100616455,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model sgd --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 123",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/sgd_tepcfc_tennessee-eastman_seed123.log"
+    },
+    {
+      "name": "sgd_teplstm_tennessee-eastman_seed0",
+      "status": "failed",
+      "duration": 7.554908990859985,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model sgd --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --input_size 52 --output_size 21 --hidden_size 128 --seed 0",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/sgd_teplstm_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "sgd_teplstm_tennessee-eastman_seed42",
+      "status": "failed",
+      "duration": 7.582259178161621,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model sgd --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --input_size 52 --output_size 21 --hidden_size 128 --seed 42",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/sgd_teplstm_tennessee-eastman_seed42.log"
+    },
+    {
+      "name": "sgd_teplstm_tennessee-eastman_seed123",
+      "status": "failed",
+      "duration": 7.617675065994263,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model sgd --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --input_size 52 --output_size 21 --hidden_size 128 --seed 123",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/sgd_teplstm_tennessee-eastman_seed123.log"
+    },
+    {
+      "name": "er_tepcfc_tennessee-eastman_seed0",
+      "status": "failed",
+      "duration": 7.628873586654663,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model er --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --buffer_size 1000 --minibatch_size 64 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 0",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/er_tepcfc_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "er_tepcfc_tennessee-eastman_seed42",
+      "status": "failed",
+      "duration": 7.599128723144531,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model er --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --buffer_size 1000 --minibatch_size 64 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 42",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/er_tepcfc_tennessee-eastman_seed42.log"
+    },
+    {
+      "name": "er_tepcfc_tennessee-eastman_seed123",
+      "status": "failed",
+      "duration": 7.645220041275024,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model er --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --buffer_size 1000 --minibatch_size 64 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 123",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/er_tepcfc_tennessee-eastman_seed123.log"
+    },
+    {
+      "name": "er_teplstm_tennessee-eastman_seed0",
+      "status": "failed",
+      "duration": 7.62264609336853,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model er --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --buffer_size 1000 --minibatch_size 64 --input_size 52 --output_size 21 --hidden_size 128 --seed 0",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/er_teplstm_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "er_teplstm_tennessee-eastman_seed42",
+      "status": "failed",
+      "duration": 7.632568836212158,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model er --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --buffer_size 1000 --minibatch_size 64 --input_size 52 --output_size 21 --hidden_size 128 --seed 42",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/er_teplstm_tennessee-eastman_seed42.log"
+    },
+    {
+      "name": "er_teplstm_tennessee-eastman_seed123",
+      "status": "failed",
+      "duration": 7.6456968784332275,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model er --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --buffer_size 1000 --minibatch_size 64 --input_size 52 --output_size 21 --hidden_size 128 --seed 123",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/er_teplstm_tennessee-eastman_seed123.log"
+    },
+    {
+      "name": "derpp_tepcfc_tennessee-eastman_seed0",
+      "status": "failed",
+      "duration": 7.7394118309021,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model derpp --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --buffer_size 1000 --alpha 0.2 --beta 0.5 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 0",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/derpp_tepcfc_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "derpp_tepcfc_tennessee-eastman_seed42",
+      "status": "failed",
+      "duration": 7.62436842918396,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model derpp --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --buffer_size 1000 --alpha 0.2 --beta 0.5 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 42",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/derpp_tepcfc_tennessee-eastman_seed42.log"
+    },
+    {
+      "name": "derpp_tepcfc_tennessee-eastman_seed123",
+      "status": "failed",
+      "duration": 7.650479793548584,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model derpp --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --buffer_size 1000 --alpha 0.2 --beta 0.5 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 123",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/derpp_tepcfc_tennessee-eastman_seed123.log"
+    },
+    {
+      "name": "derpp_teplstm_tennessee-eastman_seed0",
+      "status": "failed",
+      "duration": 7.6297876834869385,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model derpp --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --buffer_size 1000 --alpha 0.2 --beta 0.5 --input_size 52 --output_size 21 --hidden_size 128 --seed 0",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/derpp_teplstm_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "derpp_teplstm_tennessee-eastman_seed42",
+      "status": "failed",
+      "duration": 7.702989101409912,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model derpp --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --buffer_size 1000 --alpha 0.2 --beta 0.5 --input_size 52 --output_size 21 --hidden_size 128 --seed 42",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/derpp_teplstm_tennessee-eastman_seed42.log"
+    },
+    {
+      "name": "derpp_teplstm_tennessee-eastman_seed123",
+      "status": "failed",
+      "duration": 7.733114242553711,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model derpp --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --buffer_size 1000 --alpha 0.2 --beta 0.5 --input_size 52 --output_size 21 --hidden_size 128 --seed 123",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/derpp_teplstm_tennessee-eastman_seed123.log"
+    },
+    {
+      "name": "lwf_tepcfc_tennessee-eastman_seed0",
+      "status": "failed",
+      "duration": 7.695064067840576,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model lwf --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --alpha 0.5 --temperature 2.0 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 0",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/lwf_tepcfc_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "lwf_tepcfc_tennessee-eastman_seed42",
+      "status": "failed",
+      "duration": 7.577955007553101,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model lwf --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --alpha 0.5 --temperature 2.0 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 42",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/lwf_tepcfc_tennessee-eastman_seed42.log"
+    },
+    {
+      "name": "lwf_tepcfc_tennessee-eastman_seed123",
+      "status": "failed",
+      "duration": 7.611365795135498,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model lwf --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --alpha 0.5 --temperature 2.0 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 123",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/lwf_tepcfc_tennessee-eastman_seed123.log"
+    },
+    {
+      "name": "lwf_teplstm_tennessee-eastman_seed0",
+      "status": "failed",
+      "duration": 7.548997402191162,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model lwf --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --alpha 0.5 --temperature 2.0 --input_size 52 --output_size 21 --hidden_size 128 --seed 0",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/lwf_teplstm_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "lwf_teplstm_tennessee-eastman_seed42",
+      "status": "failed",
+      "duration": 7.67044997215271,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model lwf --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --alpha 0.5 --temperature 2.0 --input_size 52 --output_size 21 --hidden_size 128 --seed 42",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/lwf_teplstm_tennessee-eastman_seed42.log"
+    },
+    {
+      "name": "lwf_teplstm_tennessee-eastman_seed123",
+      "status": "failed",
+      "duration": 7.613779544830322,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model lwf --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --alpha 0.5 --temperature 2.0 --input_size 52 --output_size 21 --hidden_size 128 --seed 123",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/lwf_teplstm_tennessee-eastman_seed123.log"
+    },
+    {
+      "name": "ewc_on_tepcfc_tennessee-eastman_seed0",
+      "status": "failed",
+      "duration": 7.5942323207855225,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model ewc_on --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --e_lambda 1000 --gamma 1.0 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 0",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/ewc_on_tepcfc_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "ewc_on_tepcfc_tennessee-eastman_seed42",
+      "status": "failed",
+      "duration": 7.647170305252075,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model ewc_on --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --e_lambda 1000 --gamma 1.0 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 42",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/ewc_on_tepcfc_tennessee-eastman_seed42.log"
+    },
+    {
+      "name": "ewc_on_tepcfc_tennessee-eastman_seed123",
+      "status": "failed",
+      "duration": 7.569369077682495,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model ewc_on --backbone tepcfc --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --e_lambda 1000 --gamma 1.0 --input_size 52 --output_size 21 --hidden_size 128 --use_ncp_wiring 1 --seed 123",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/ewc_on_tepcfc_tennessee-eastman_seed123.log"
+    },
+    {
+      "name": "ewc_on_teplstm_tennessee-eastman_seed0",
+      "status": "failed",
+      "duration": 7.52348780632019,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model ewc_on --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --e_lambda 1000 --gamma 1.0 --input_size 52 --output_size 21 --hidden_size 128 --seed 0",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/ewc_on_teplstm_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "ewc_on_teplstm_tennessee-eastman_seed42",
+      "status": "failed",
+      "duration": 7.601627826690674,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model ewc_on --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --e_lambda 1000 --gamma 1.0 --input_size 52 --output_size 21 --hidden_size 128 --seed 42",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160556/ewc_on_teplstm_tennessee-eastman_seed42.log"
+    },
+    {
+      "name": "ewc_on_teplstm_tennessee-eastman_seed123",
+      "status": "failed",
+      "duration": 7.581812381744385,
+      "exit_code": 2,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model ewc_on --backbone teplstm --n_epochs 50 --batch_size 64 --num_workers 0 --savecheck task --enable_other_metrics 1 --lr 0.001 --e_lambda 1000 --gamma 1.0 --input_size 52 --output_size 21 --hidden_size 128 --seed 123",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160556/ewc_on_teplstm_tennessee-eastman_seed123.log"
+    }
+  ],
+  "timestamp": "2025-12-19T16:08:13.609753"
+}

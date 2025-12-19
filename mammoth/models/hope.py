@@ -39,6 +39,7 @@ class Hope(ContinualModel):
             self.net(inputs, teach_signal=teach_signal)
             
         # 4. Standard Optimization Step
+        torch.nn.utils.clip_grad_norm_(self.net.parameters(), 1.0)
         self.opt.step()
         
         return loss.item()

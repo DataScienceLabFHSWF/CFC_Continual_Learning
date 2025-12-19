@@ -94,6 +94,11 @@ class BaseTEPCfC(MammothBackbone):
         # x is now (batch, seq_len, input_size)
         seq_len = x.size(1)
         
+        # Check for NaNs in input
+        if torch.isnan(x).any():
+            print(f"NaN detected in input to TEPcfc. Shape: {x.shape}")
+            x = torch.nan_to_num(x)
+
         # Project input to hidden dimension
         x = self.input_projection(x)  # (batch, seq_len, hidden_size)
         
@@ -106,6 +111,11 @@ class BaseTEPCfC(MammothBackbone):
         output, self.hidden_state = self.rnn(x, self.hidden_state)
         # output: (batch, seq_len, num_classes)
         
+        # Check for NaNs in output
+        if torch.isnan(output).any():
+            print(f"NaN detected in output of CfC. Shape: {output.shape}")
+            output = torch.nan_to_num(output)
+
         # Take the last timestep's output
         last_output = output[:, -1, :]  # (batch, num_classes)
         

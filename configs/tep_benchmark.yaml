@@ -16,7 +16,7 @@ global_args:
   batch_size: 64
   num_workers: 0
   savecheck: task
-  enable_other_metrics: true
+  enable_other_metrics: 1
 
 # Datasets (TEP only)
 datasets:
@@ -63,14 +63,14 @@ model_args:
 # Backbone-specific arguments
 backbone_args:
   tepcfc:
-    input_size: 52
-    output_size: 21
+    num_features: 52
+    num_classes: 22
     hidden_size: 128
     use_ncp_wiring: 1
   
   teplstm:
-    input_size: 52
-    output_size: 21
+    num_features: 52
+    num_classes: 22
     hidden_size: 128
 
 # Dataset-specific arguments

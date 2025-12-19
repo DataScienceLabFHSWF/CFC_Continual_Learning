@@ -67,7 +67,14 @@ class TitanMemory(nn.Module):
             if error_signal.shape != pred.shape:
                 error_signal = error_signal.expand_as(pred)
             
+            # Safety check for NaNs
+            if torch.isnan(error_signal).any() or torch.isinf(error_signal).any():
+                return
+
             torch.autograd.backward(pred, grad_tensors=error_signal, inputs=list(self.net.parameters()), retain_graph=False)
+            
+            # Clip gradients
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), self.grad_clip)
             
             with torch.no_grad():
                 for param in self.net.parameters():
@@ -143,8 +150,15 @@ class CMS(nn.Module):
                         if teach_signal.shape != pred.shape:
                             teach_signal = teach_signal.expand_as(pred)
 
+                        # Safety check for NaNs
+                        if torch.isnan(teach_signal).any() or torch.isinf(teach_signal).any():
+                            continue
+
                         torch.autograd.backward(pred, grad_tensors=teach_signal, inputs=list(block.parameters()), retain_graph=False)
                         
+                        # Clip gradients
+                        torch.nn.utils.clip_grad_norm_(block.parameters(), 1.0)
+
                         with torch.no_grad():
                             for param in block.parameters():
                                 if param.grad is not None:

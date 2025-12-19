@@ -59,6 +59,7 @@ class Er(ContinualModel):
         outputs = self.net(inputs)
         loss = self.loss(outputs, labels)
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.net.parameters(), 1.0)
         self.opt.step()
 
         self.buffer.add_data(examples=not_aug_inputs,

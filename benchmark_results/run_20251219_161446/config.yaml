@@ -1,0 +1,84 @@
+backbone_args:
+  tepcfc:
+    hidden_size: 128
+    num_classes: 22
+    num_features: 52
+    use_ncp_wiring: 1
+  teplstm:
+    hidden_size: 128
+    num_classes: 22
+    num_features: 52
+backbones:
+- tepcfc
+- teplstm
+base_path: ./mammoth
+dataset_args:
+  tennessee-eastman:
+    lr: 0.001
+datasets:
+- tennessee-eastman
+global_args:
+  batch_size: 64
+  enable_other_metrics: 1
+  n_epochs: 50
+  num_workers: 0
+  savecheck: task
+gpus:
+- 0
+- 1
+model_args:
+  derpp:
+    alpha: 0.2
+    beta: 0.5
+    buffer_size: 1000
+  er:
+    buffer_size: 1000
+    minibatch_size: 64
+  ewc_on:
+    e_lambda: 1000
+    gamma: 1.0
+  lwf:
+    alpha: 0.5
+    temperature: 2.0
+models:
+- sgd
+- er
+- derpp
+- lwf
+- ewc_on
+python_cmd: python
+seeds:
+- 0
+- 42
+- 123
+traditional_ml:
+  args:
+    output_dir: tep_ml_results
+  datasets:
+  - tennessee-eastman
+  model_args:
+    gradient_boosting:
+      learning_rate: 0.1
+      max_depth: 6
+      n_estimators: 100
+    lightgbm:
+      learning_rate: 0.1
+      max_depth: 6
+      n_estimators: 100
+    random_forest:
+      max_depth: 10
+      n_estimators: 100
+    xgboost:
+      learning_rate: 0.1
+      max_depth: 6
+      n_estimators: 100
+  models:
+  - xgboost
+  - lightgbm
+  - random_forest
+  - gradient_boosting
+  seeds:
+  - 0
+  - 42
+  - 123
+venv_path: ../.venv/bin/activate
