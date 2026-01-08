@@ -44,7 +44,7 @@ model_args:
   
   lwf:
     alpha: 0.5
-    temperature: 2.0
+    softmax_temp: 2.0
   
   ewc_on:
     e_lambda: 100

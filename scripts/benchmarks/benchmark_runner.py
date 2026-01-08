@@ -182,7 +182,7 @@ class BenchmarkRunner:
         # Check if this is a traditional ML experiment
         if exp.get('traditional_ml', False):
             # Use the gradient boosting script
-            script_path = '../tep_gradient_boosting.py'
+            script_path = '../scripts/analysis/tep_gradient_boosting.py'
             args_list = [
                 f"--dataset {exp['dataset']}",
                 f"--model {exp['model']}",

@@ -40,7 +40,7 @@ def main():
     print("="*80)
     
     # Check if tep_gradient_boosting.py exists
-    script_path = Path("tep_gradient_boosting.py")
+    script_path = Path("scripts/analysis/tep_gradient_boosting.py")
     if not script_path.exists():
         print(f"ERROR: {script_path} not found!")
         return 1
@@ -53,7 +53,7 @@ def main():
     results = {}
     
     for model in models:
-        cmd = f"{venv_activate} && python tep_gradient_boosting.py --models {model} --output validation_ml_{model}.json"
+        cmd = f"{venv_activate} && python scripts/analysis/tep_gradient_boosting.py --models {model} --output validation_ml_{model}.json"
         success = run_command(cmd, f"TEP + {model}")
         results[model] = success
     

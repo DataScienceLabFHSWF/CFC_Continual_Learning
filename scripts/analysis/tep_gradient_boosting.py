@@ -55,6 +55,15 @@ def load_tep_data(data_dir='data/tennessee_eastman'):
             data = np.loadtxt(file_path)
             data = pd.DataFrame(data)
         
+        # Handle transposed data (some TEP files are features x samples)
+        if data.shape[1] != 52 and data.shape[0] == 52:
+            print(f"  Note: Transposing file {fault_id} with shape {data.shape}")
+            data = data.T
+            
+        if data.shape[1] != 52:
+             print(f"Warning: File {fault_id} has {data.shape[1]} features, expected 52. Skipping.")
+             continue
+
         # Add labels
         labels = np.full(len(data), fault_id)
         
@@ -265,7 +274,7 @@ def visualize_results(results, output_path='figures/tep_gb_results.pdf'):
 
 def main():
     parser = argparse.ArgumentParser(description='Gradient Boosting baseline for TEP')
-    parser.add_argument('--data_dir', type=str, default='data/tennessee_eastman',
+    parser.add_argument('--data_dir', type=str, default='data/TEP',
                        help='Path to TEP data directory')
     parser.add_argument('--models', nargs='+', default=['xgboost', 'lightgbm'],
                        choices=['xgboost', 'lightgbm'],
