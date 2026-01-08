@@ -1,0 +1,17 @@
+model: er
+backbone: hope
+dataset: seq-cifar10
+n_epochs: 50
+lr: 0.1
+batch_size: 32
+buffer_size: 500  # Small replay buffer to anchor old classes
+
+model_args:
+    # ER doesn't need much, but we need to ensure HOPE args are passed to backbone
+    
+backbone_args:
+    hidden_dim: 128
+    key_dim: 64
+    memory_layers: 3
+    surprise_threshold: 0.15
+    momentum: 0.9

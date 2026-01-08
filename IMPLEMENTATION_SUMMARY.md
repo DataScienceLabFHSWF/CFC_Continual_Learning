@@ -16,7 +16,14 @@
 3. **H3 (Gradient Isolation):** NCP gradients more orthogonal than Dense
 4. **H4 (Expressivity):** CfC/LTC matches LSTM with fewer parameters
 
-### 2. Architecture Implementation
+### 3. Architecture Implementation
+
+#### HOPE (Nested Learning) - STATUS: SUSPENDED FOR CLASS-IL
+**Implementation Analysis (Jan 2026):**
+The HOPE architecture (Hierarchical / Titan Memory) was implemented and verified against canonical literature. However, it fails fundamentally on Class-Incremental Learning (Class-IL) benchmarks (0% Past Accuracy).
+*   **Reason:** Canonical Nested Learning is designed for **Language Modeling** (Fixed Vocabulary). Class-IL requires **Expanding Output Heads**. Dense memory without Replay cannot handle the concept drift of new heads relying on old memory keys.
+*   **Ref:** See `docs/HOPE_IMPLEMENTATION_ANALYSIS.md`.
+*   **Next Steps:** Pivot to hybrid `HOPE + ER` or strictly use for TEP/Result reproduction.
 
 #### MNIST Backbones (3 variants):
 | Backbone | File | Purpose |

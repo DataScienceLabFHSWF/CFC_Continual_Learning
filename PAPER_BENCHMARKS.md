@@ -1,8 +1,20 @@
 # CfC Continual Learning - Paper Benchmarks Guide
 
-**Status Note (2026-01-08):** See [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md) for current run statistics.
+**Status Note (2026-01-08):**
 - **TEP**: Verified working.
-- **HOPE**: ARCHITECTURE FAILED VALIDATION. See [docs/HOPE_IMPLEMENTATION_REPORT.md](docs/HOPE_IMPLEMENTATION_REPORT.md). Do not run benchmarks.
+- **HOPE**: **ARCHITECTURE FAILED CLASS-IL VALIDATION.**  
+  *Analysis:* HOPE (Nested Learning/Titan Memory) is designed for **Language Modeling** (Fixed Vocabulary, Next Token Prediction). The memory modules learn dense representations $x \to z$ that map to a fixed output space $Y$. In **Class-Incremental Learning** (Mammoth benchmarks), the output head $Y$ grows (new classes added). The gradients from new classes cause the dense memory to shift rapidly ("Plasticity"), destroying keys for old classes ("Catastrophic Forgetting") because there is no Replay providing gradients for the old head connections.
+  *Conclusion:* Pure HOPE is structurally incompatible with growing-head Class-IL without a Replay Buffer.
+
+### 3. CfC vs. Catastrophic Forgetting (SGD Baseline)
+**Hypothesis Verified:** Does the CfC architecture (Neural Circuit Policies) inherently mitigate catastrophic forgetting relative to ResNet when using only SGD (No Replay)?
+**Result:** **NO.**
+*   **Metric:** Class-IL Accuracy on Seq-CIFAR10
+*   **ResNet-18 (SGD):** 19.63% (Chance/Last Task only)
+*   **CfC (SGD):** 19.66% (Chance/Last Task only)
+*   **Conclusion:** The sparsity and ODE dynamics of CfC do **not** provide immunity to catastrophic forgetting in the Class-IL setting. Like standard architectures, CfC requires a Replay Buffer (ER/DER) to maintain performance on past tasks.
+
+- **See [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md) for current run statistics.**
 
 This guide explains how to run the comprehensive benchmark suite for the CfC continual learning paper.
 
