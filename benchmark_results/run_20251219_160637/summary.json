@@ -1,0 +1,68 @@
+{
+  "config_path": "configs/hope_suite.yaml",
+  "total_experiments": 6,
+  "num_parallel": 4,
+  "gpus": [
+    0,
+    0,
+    1,
+    1
+  ],
+  "results": [
+    {
+      "name": "hope_hope_seq-cifar10_seed0",
+      "status": "success",
+      "duration": 28991.335928201675,
+      "exit_code": 0,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source /home/fneubuerger/CFC_Continual_Learning/.venv/bin/activate && python utils/main.py --dataset seq-cifar10 --model hope --backbone hope --num_workers 4 --wandb_entity fneubuerger --wandb_project mammoth --input_size 32 --input_channels 3 --n_epochs 50 --batch_size 32 --hope_lr 0.001 --lr 0.001 --seed 0",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160637/hope_hope_seq-cifar10_seed0.log"
+    },
+    {
+      "name": "er_resnet18_vanilla_seq-cifar10_seed0",
+      "status": "success",
+      "duration": 28687.78350162506,
+      "exit_code": 0,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source /home/fneubuerger/CFC_Continual_Learning/.venv/bin/activate && python utils/main.py --dataset seq-cifar10 --model er --backbone resnet18_vanilla --num_workers 4 --wandb_entity fneubuerger --wandb_project mammoth --n_epochs 50 --batch_size 32 --buffer_size 500 --lr 0.03 --seed 0",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160637/er_resnet18_vanilla_seq-cifar10_seed0.log"
+    },
+    {
+      "name": "hope_hope_seq-mnist_seed0",
+      "status": "success",
+      "duration": 6964.98898935318,
+      "exit_code": 0,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source /home/fneubuerger/CFC_Continual_Learning/.venv/bin/activate && python utils/main.py --dataset seq-mnist --model hope --backbone hope --num_workers 4 --wandb_entity fneubuerger --wandb_project mammoth --input_size 28 --input_channels 1 --n_epochs 10 --batch_size 32 --hope_lr 0.001 --lr 0.001 --seed 0",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160637/hope_hope_seq-mnist_seed0.log"
+    },
+    {
+      "name": "er_mnistmlp_seq-mnist_seed0",
+      "status": "success",
+      "duration": 6568.7108743190765,
+      "exit_code": 0,
+      "command": "CUDA_VISIBLE_DEVICES=1 cd ./mammoth && source /home/fneubuerger/CFC_Continual_Learning/.venv/bin/activate && python utils/main.py --dataset seq-mnist --model er --backbone mnistmlp --num_workers 4 --wandb_entity fneubuerger --wandb_project mammoth --n_epochs 10 --batch_size 32 --buffer_size 200 --lr 0.03 --seed 0",
+      "gpu_id": 1,
+      "output_file": "benchmark_results/run_20251219_160637/er_mnistmlp_seq-mnist_seed0.log"
+    },
+    {
+      "name": "hope_hope_seq-cifar100_seed0",
+      "status": "success",
+      "duration": 28994.61699819565,
+      "exit_code": 0,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source /home/fneubuerger/CFC_Continual_Learning/.venv/bin/activate && python utils/main.py --dataset seq-cifar100 --model hope --backbone hope --num_workers 4 --wandb_entity fneubuerger --wandb_project mammoth --input_size 32 --input_channels 3 --n_epochs 50 --batch_size 32 --hope_lr 0.001 --lr 0.001 --seed 0",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160637/hope_hope_seq-cifar100_seed0.log"
+    },
+    {
+      "name": "er_resnet18_vanilla_seq-cifar100_seed0",
+      "status": "failed",
+      "duration": 2883.8006608486176,
+      "exit_code": 1,
+      "command": "CUDA_VISIBLE_DEVICES=0 cd ./mammoth && source /home/fneubuerger/CFC_Continual_Learning/.venv/bin/activate && python utils/main.py --dataset seq-cifar100 --model er --backbone resnet18_vanilla --num_workers 4 --wandb_entity fneubuerger --wandb_project mammoth --n_epochs 50 --batch_size 32 --buffer_size 500 --lr 0.03 --seed 0",
+      "gpu_id": 0,
+      "output_file": "benchmark_results/run_20251219_160637/er_resnet18_vanilla_seq-cifar100_seed0.log"
+    }
+  ],
+  "timestamp": "2025-12-20T01:59:20.808767"
+}

@@ -42,6 +42,7 @@ class BaseTEP_LTC(MammothBackbone):
         
         # Output layer
         self.output_layer = nn.Linear(num_classes, num_classes)
+        self.classifier = self.output_layer
         self.hidden_state = None
         
     def forward(self, x, returnt='out'):

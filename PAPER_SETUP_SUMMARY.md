@@ -4,6 +4,13 @@
 
 This document summarizes the comprehensive paper benchmark infrastructure created for the CfC continual learning project.
 
+## Status Update (2026-01-08)
+
+**Benchmarks are Active.**
+- **TEP**: Fixed critical data loading bugs. Ready for full deployment.
+- **HOPE (Nested Learning)**: Stability fixes applied (NaNs resolved). Currently debugging catastrophic forgetting (0% Class-IL accuracy).
+- **Status Dashboard**: See [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md) for live progress.
+
 ## What Was Created
 
 ### 1. Paper Benchmark Configuration (`configs/paper_benchmarks.yaml`)
@@ -14,7 +21,7 @@ Comprehensive YAML configuration defining:
 - **TEP**: 16 configurations (8 CfC + 8 LSTM) × 3 seeds = 48 runs
 - **Total**: 198 experiment runs
 
-Models tested:
+Models tested: 
 - SGD, Joint (upper bound)
 - ER (buffer: 200, 500, 1000)
 - DER++ (buffer: 200, 500, 1000)

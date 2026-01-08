@@ -1,0 +1,47 @@
+{
+  "config_path": "configs/test_fixes.yaml",
+  "total_experiments": 4,
+  "num_parallel": 1,
+  "gpus": [
+    0
+  ],
+  "results": [
+    {
+      "name": "lwf_tepcfc_tennessee-eastman_seed0",
+      "status": "success",
+      "duration": 60.61190676689148,
+      "exit_code": 0,
+      "command": "cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model lwf --backbone tepcfc --n_epochs 1 --batch_size 32 --num_workers 0 --lr 0.001 --alpha 0.5 --softmax_temp 2.0 --hidden_size 128 --num_classes 22 --num_features 52 --use_ncp_wiring 1 --seed 0",
+      "gpu_id": null,
+      "output_file": "benchmark_results/run_20260108_072556/lwf_tepcfc_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "lwf_teplstm_tennessee-eastman_seed0",
+      "status": "success",
+      "duration": 27.787731885910034,
+      "exit_code": 0,
+      "command": "cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model lwf --backbone teplstm --n_epochs 1 --batch_size 32 --num_workers 0 --lr 0.001 --alpha 0.5 --softmax_temp 2.0 --hidden_size 128 --num_classes 22 --num_features 52 --seed 0",
+      "gpu_id": null,
+      "output_file": "benchmark_results/run_20260108_072556/lwf_teplstm_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "ewc_on_tepcfc_tennessee-eastman_seed0",
+      "status": "success",
+      "duration": 149.70236539840698,
+      "exit_code": 0,
+      "command": "cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model ewc_on --backbone tepcfc --n_epochs 1 --batch_size 32 --num_workers 0 --lr 0.001 --e_lambda 100 --gamma 1.0 --hidden_size 128 --num_classes 22 --num_features 52 --use_ncp_wiring 1 --seed 0",
+      "gpu_id": null,
+      "output_file": "benchmark_results/run_20260108_072556/ewc_on_tepcfc_tennessee-eastman_seed0.log"
+    },
+    {
+      "name": "ewc_on_teplstm_tennessee-eastman_seed0",
+      "status": "success",
+      "duration": 30.43489098548889,
+      "exit_code": 0,
+      "command": "cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset tennessee-eastman --model ewc_on --backbone teplstm --n_epochs 1 --batch_size 32 --num_workers 0 --lr 0.001 --e_lambda 100 --gamma 1.0 --hidden_size 128 --num_classes 22 --num_features 52 --seed 0",
+      "gpu_id": null,
+      "output_file": "benchmark_results/run_20260108_072556/ewc_on_teplstm_tennessee-eastman_seed0.log"
+    }
+  ],
+  "timestamp": "2026-01-08T07:30:24.734383"
+}

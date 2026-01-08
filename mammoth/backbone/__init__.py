@@ -132,7 +132,10 @@ class MammothBackbone(nn.Module):
         """
         grads = []
         for pp in list(self.parameters()):
-            grads.append(pp.grad.view(-1))
+            if pp.grad is not None:
+                grads.append(pp.grad.reshape(-1))
+            else:
+                grads.append(torch.zeros_like(pp).reshape(-1))
         return torch.cat(grads)
 
     def set_grads(self, new_grads: torch.Tensor) -> None:

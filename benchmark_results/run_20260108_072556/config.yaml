@@ -1,0 +1,39 @@
+backbone_args:
+  tepcfc:
+    hidden_size: 128
+    num_classes: 22
+    num_features: 52
+    use_ncp_wiring: 1
+  teplstm:
+    hidden_size: 128
+    num_classes: 22
+    num_features: 52
+backbones:
+- tepcfc
+- teplstm
+base_path: ./mammoth
+dataset_args:
+  tennessee-eastman:
+    lr: 0.001
+datasets:
+- tennessee-eastman
+global_args:
+  batch_size: 32
+  n_epochs: 1
+  num_workers: 0
+gpus:
+- 0
+model_args:
+  ewc_on:
+    e_lambda: 100
+    gamma: 1.0
+  lwf:
+    alpha: 0.5
+    softmax_temp: 2.0
+models:
+- lwf
+- ewc_on
+python_cmd: python
+seeds:
+- 0
+venv_path: ../.venv/bin/activate

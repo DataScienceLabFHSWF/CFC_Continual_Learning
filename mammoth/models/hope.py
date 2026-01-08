@@ -43,3 +43,11 @@ class Hope(ContinualModel):
         self.opt.step()
         
         return loss.item()
+
+    def end_task(self, dataset):
+        """
+        Called at the end of each task. Triggers memory consolidation.
+        """
+        if hasattr(self.net, 'consolidate'):
+             print(f"Ending task {dataset.current_task}. Triggering HOPE consolidation.")
+             self.net.consolidate()

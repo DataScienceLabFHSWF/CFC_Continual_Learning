@@ -1,0 +1,32 @@
+backbone_args:
+  hope:
+    depth: 1
+    dim: 64
+    heads: 4
+    input_channels: 3
+    input_size: 32
+    num_classes: 10
+backbones:
+- hope
+base_path: ./mammoth
+dataset_args:
+  seq-cifar10:
+    lr: 0.001
+datasets:
+- seq-cifar10
+global_args:
+  batch_size: 32
+  n_epochs: 2
+  num_workers: 0
+gpus:
+- 0
+model_args:
+  hope:
+    hope_lr: 0.001
+models:
+- hope
+python_cmd: python
+seeds:
+- 0
+- 1
+venv_path: ../.venv/bin/activate

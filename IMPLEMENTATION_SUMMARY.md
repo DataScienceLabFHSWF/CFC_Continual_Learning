@@ -264,3 +264,48 @@ Provides:
 4. **Comprehensive evaluation** across 3 diverse datasets
 
 This is ready for **conference submission** (ICML, NeurIPS, ICLR)! 🎓
+
+---
+
+## 🔧 Stability & Debugging (December 19, 2025)
+
+**Issue 1: Gradient Explosion & NaNs in HOPE/CfC**
+- **Symptoms:** `RuntimeError: cuDNN error: CUDNN_STATUS_INTERNAL_ERROR` and `device-side assert triggered`.
+- **Root Cause:** Recurrent dynamics in CfC/LTC can lead to exploding gradients, causing NaNs in the hidden states or loss, which triggers CUDA assertions.
+- **Fix:**
+    - Added `torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)` in the training loop (`mammoth/models/er.py`).
+    - Added NaN checks and `nan_to_num` safety guards in `mammoth/backbone/TEPcfc.py` and `mammoth/backbone/hope.py`.
+
+**Issue 2: TEP Benchmark Configuration Mismatch**
+- **Symptoms:** `unrecognized arguments: --input_size 52 --output_size 21` when launching TEP benchmarks.
+- **Root Cause:** The `tepcfc` backbone registration expected `num_features` and `num_classes` arguments, but the config file provided `input_size` and `output_size`.
+- **Fix:** Updated `configs/tep_benchmark.yaml` to use the correct argument names matching the backbone definition.
+
+**Issue 3: TEP Data Leakage**
+- **Symptoms:** TEP accuracy stuck at ~14% (random guess) for previous runs.
+- **Root Cause:** The `TennesseeEastmanDataset` class was not correctly filtering data by task when used with Mammoth's `store_masked_loaders`.
+- **Fix:** Updated `mammoth/datasets/tennessee_eastman.py` to correctly expose `self.data` and `self.targets` for Mammoth's internal masking logic.
+
+---
+
+## 5. HOPE & Nested Learning Implementation
+
+**Architecture:**
+- **HOPE (Hybrid Optimization for Plasticity and Efficiency):** A Vision Transformer-based backbone designed for continual learning.
+- **Components:**
+    - **Titan Memory:** A simplified associative memory module that learns key-value associations (based on Titans [Behrouz et al., 2025]).
+    - **CMS (Contextual Memory System):** A multi-timescale memory system with "fast" (period=1) and "mid" (period=5) update frequencies.
+
+**Nested Learning Mechanism:**
+- **Concept:** Combines global slow optimization with local fast optimization (inspired by Titans [Behrouz et al., 2025]).
+- **Flow:**
+    1. **Outer Loop:** Standard forward/backward pass on the global loss.
+    2. **Signal Extraction:** Gradients of the penultimate features (`features.grad`) are captured after `loss.backward()`.
+    3. **Inner Loop (Nested):** These feature gradients serve as a `teach_signal` passed back into the `HOPEBlock`.
+    4. **Local Updates:** `TitanMemory` and `CMS` modules perform an immediate, internal SGD step using this signal to align their internal weights with the current task requirements.
+
+**Stability Measures (HOPE-Specific):**
+- **Problem:** The nested backward pass (using feature gradients as targets) caused gradient explosion and NaNs.
+- **Solution:**
+    - Implemented **Internal Gradient Clipping** (norm 1.0) within the `TitanMemory.update` and `CMS.maybe_update` methods.
+    - Added **NaN Guards** to skip internal updates if the `teach_signal` contains invalid values.

@@ -1,0 +1,20 @@
+{
+  "config_path": "configs/validate_hope_fix.yaml",
+  "total_experiments": 1,
+  "num_parallel": 1,
+  "gpus": [
+    0
+  ],
+  "results": [
+    {
+      "name": "hope_hope_seq-cifar10_seed0",
+      "status": "success",
+      "duration": 1139.843061208725,
+      "exit_code": 0,
+      "command": "cd ./mammoth && source ../.venv/bin/activate && python utils/main.py --dataset seq-cifar10 --model hope --backbone hope --n_epochs 2 --batch_size 32 --num_workers 0 --lr 0.001 --hope_lr 0.001 --input_size 32 --input_channels 3 --num_classes 10 --dim 64 --depth 1 --heads 4 --surprise_threshold 0.08 --seed 0",
+      "gpu_id": null,
+      "output_file": "benchmark_results/run_20260108_112136/hope_hope_seq-cifar10_seed0.log"
+    }
+  ],
+  "timestamp": "2026-01-08T11:40:36.156136"
+}

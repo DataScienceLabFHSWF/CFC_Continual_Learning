@@ -67,9 +67,20 @@ class BaseTEPCfC(MammothBackbone):
         
         # Output layer (CfC already outputs num_classes, but we add a final linear for flexibility)
         self.output_layer = nn.Linear(num_classes, num_classes)
+        self.classifier = self.output_layer
         
         # Hidden state (persistent across batches for continual learning)
         self.hidden_state = None
+
+    def get_params(self) -> torch.Tensor:
+        """
+        Returns all the parameters concatenated in a single tensor.
+        Overrides MammothBackbone.get_params to handle non-contiguous parameters from ncps.
+        """
+        params = []
+        for pp in self.parameters():
+            params.append(pp.contiguous().view(-1))
+        return torch.cat(params)
         
     def forward(self, x, returnt='out'):
         """
@@ -125,25 +136,20 @@ class BaseTEPCfC(MammothBackbone):
         if returnt == 'out':
             return logits
         elif returnt == 'features':
-            # Return hidden state as features
-            features = self.hidden_state
-            return features
+            # Return last output as features (compatible with classifier)
+            return last_output
         elif returnt in ['both', 'all']:
-            features = self.hidden_state
-            return logits, features
+            return logits, last_output
         else:
             raise ValueError(f"Unknown returnt value: {returnt}")
     
     def reset_hidden(self):
         """Reset hidden state (call between tasks in continual learning)."""
         self.hidden_state = None
-    
-    def get_params(self):
-        """Return number of parameters."""
-        return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
 
-class TEPLSTM(nn.Module):
+
+class TEPLSTM(MammothBackbone):
     """
     LSTM baseline for Tennessee Eastman Process fault detection.
     For comparison with CfC.
@@ -172,6 +178,7 @@ class TEPLSTM(nn.Module):
         )
         
         self.output_layer = nn.Linear(hidden_size, num_classes)
+        self.classifier = self.output_layer
         self.hidden_state = None
         
     def forward(self, x, returnt='out'):
@@ -198,9 +205,7 @@ class TEPLSTM(nn.Module):
     
     def reset_hidden(self):
         self.hidden_state = None
-    
-    def get_params(self):
-        return sum(p.numel() for p in self.parameters() if p.requires_grad)
+
 
 
 @register_backbone('tepcfc')

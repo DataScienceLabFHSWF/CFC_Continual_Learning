@@ -1,5 +1,9 @@
 # CfC Continual Learning - Paper Benchmarks Guide
 
+**Status Note (2026-01-08):** See [BENCHMARK_STATUS.md](BENCHMARK_STATUS.md) for current run statistics.
+- **TEP**: Verified working.
+- **HOPE**: ARCHITECTURE FAILED VALIDATION. See [docs/HOPE_IMPLEMENTATION_REPORT.md](docs/HOPE_IMPLEMENTATION_REPORT.md). Do not run benchmarks.
+
 This guide explains how to run the comprehensive benchmark suite for the CfC continual learning paper.
 
 ## Overview
