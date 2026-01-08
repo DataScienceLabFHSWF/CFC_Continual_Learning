@@ -159,10 +159,6 @@ class CMS(nn.Module):
             name = level['name']
             period = level['period']
             
-            # ALTERNATIVE FIX: Freeze Slow Memories during training (Consolidation Strategy)
-            if period >= 100:
-                continue
-            
             if self.step_counter % period == 0:
                 block = self.blocks[i]
                 inp = inputs[name].detach()
@@ -198,28 +194,30 @@ class CMS(nn.Module):
                         # Clip gradients
                         torch.nn.utils.clip_grad_norm_(block.parameters(), 1.0)
 
+                        # MOMENTUM UPDATE (Simulating M3/Optimizer behavior)
                         with torch.no_grad():
+                            momentum = 0.9
                             for param in block.parameters():
                                 if param.grad is not None:
-                                    param.add_(param.grad, alpha=-lr)
+                                    # Very basic momentum implementation
+                                    if not hasattr(param, 'momentum_buffer'):
+                                        param.momentum_buffer = torch.zeros_like(param.data)
+                                    
+                                    buf = param.momentum_buffer
+                                    buf.mul_(momentum).add_(param.grad, alpha=1.0)
+                                    
+                                    # Update weight
+                                    param.add_(buf, alpha=-lr)
                                     param.grad.zero_()
 
     def consolidate(self):
         """
-        Consolidate memory: Copy Fast weights to Slow weights.
+        Consolidate memory.
+        In the corrected Nested Learning implementation, consolidation happens
+        continuously via multi-frequency updates. Explicit copying is destructive.
+        Keeping method for API compatibility but making it no-op.
         """
-        # Assume levels are [Fast, Mid, Slow]
-        # Copy Fast (idx 0) to Slow (idx -1)
-        fast_block = self.blocks[0]
-        slow_block = self.blocks[-1]
-        
-        # Simple weight copy (strict consolidation)
-        # In a real hippocampus model, this might be distillation.
-        # Here we assume the architecture is identical.
-        if len(self.levels) > 1:
-             print(f"[HOPE] Consolidating memory: Fast ({self.levels[0]['name']}) -> Slow ({self.levels[-1]['name']})")
-             # hard copy
-             slow_block.load_state_dict(fast_block.state_dict())
+        pass
 
 # --- Self Modifier ---
 
