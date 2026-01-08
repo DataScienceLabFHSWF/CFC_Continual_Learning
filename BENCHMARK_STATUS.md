@@ -5,15 +5,19 @@
 
 Benchmarks are currently **In Progress**. 
 - **Completed Runs:** 125
-- **Failed/Incomplete Runs:** 64
-- **Active Experimets:** 4 (MNIST MLP baselines)
+- **Active Suites:**
+    1. **TEP Benchmarks** (Baselines): ~60% Complete.
+    2. **HOPE Benchmarks** (Hybrid Strategy): Just Started.
 
 ## 2. Active Experiments (Tmux)
 The following experiments are currently running:
-- `paper_mnist_mlp_sgd_s0`
-- `paper_mnist_mlp_sgd_s1`
-- `paper_mnist_mlp_sgd_s2`
-- `paper_mnist_mlp_joint_s0`
+- **Session `tep_benchmark_orchestrator`**:
+    - `er_teplstm` (Running)
+    - `derpp_tepcfc` (Running)
+- **Session `hope_benchmark_orchestrator`**:
+    - `seq-cifar10`: Hybrid HOPE vs ER
+    - `seq-mnist`: Hybrid HOPE vs ER
+    - `seq-cifar100`: Hybrid HOPE vs ER
 
 ## 3. Results Summary (Completed)
 

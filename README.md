@@ -2,9 +2,9 @@
 
 The WandB page for this project can be found here: [https://wandb.ai/fneubuerger/mammoth/]
 
-Exploring **Closed-form Continuous-time (CfC)** networks and **Neural Circuit Policies (NCPs)** for continual learning scenarios.## About the Project
+Exploring **Closed-form Continuous-time (CfC)** networks and **Neural Circuit Policies (NCPs)** for continual learning scenarios.
 
-
+> **Status (Jan 2026):** We have identified that "Pure" HOPE architectures are insufficient for Class-Incremental Learning due to the "Growing Head" problem. We are now benchmarking a **Hybrid HOPE** strategy (CfC + Titan Memory + Experience Replay) which has shown promising preliminary results (Retention restored from 0% -> 40%+).
 
 ## 🎯 Project OverviewThis project focuses on exploring the capabilities of Liquid Time Constant (LTC) neural networks for continual learning approaches, utilizing the Mammoth library.
 
