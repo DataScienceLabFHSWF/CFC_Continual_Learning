@@ -27,6 +27,8 @@ explicit_experiments:
       batch_size: 32
       hope_lr: 0.001
       lr: 0.001
+      buffer_size: 500
+      momentum: 0.9
 
   - dataset: seq-cifar10
     model: er
@@ -50,6 +52,8 @@ explicit_experiments:
       batch_size: 32
       hope_lr: 0.001
       lr: 0.001
+      buffer_size: 200
+      momentum: 0.9
 
   - dataset: seq-mnist
     model: er
@@ -73,6 +77,8 @@ explicit_experiments:
       batch_size: 32
       hope_lr: 0.001
       lr: 0.001
+      buffer_size: 500
+      momentum: 0.9
 
   - dataset: seq-cifar100
     model: er
