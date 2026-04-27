@@ -119,22 +119,28 @@ class TennesseeEastmanDataset(Dataset):
 class TennesseeEastmanContinual(ContinualDataset):
     """
     Tennessee Eastman Process for continual fault detection learning.
-    
-    Setting: Class-incremental learning
-    - Task 0: Normal operation (fault 0)
-    - Task 1: Fault 1
-    - Task 2: Fault 2
-    - ...
-    - Task 21: Fault 21
-    
-    Each task involves learning to detect a new fault type while maintaining
-    ability to detect previously learned faults (and normal operation).
+
+    Setting: Class-incremental learning, 11 tasks of 2 classes each.
+
+    The original 22-class space (Normal + 21 faults) is grouped pairwise so
+    that each task contains two classes; this makes Class-IL non-degenerate
+    (a single-class-per-task split would lower-bound accuracy at chance,
+    1/22 \approx 4.5\,\%).
+
+    Task layout (default ``pairwise`` grouping):
+        Task 0: classes {0, 1}     (Normal,  Fault 1)
+        Task 1: classes {2, 3}     (Fault 2, Fault 3)
+        ...
+        Task 10: classes {20, 21}  (Fault 20, Fault 21)
+
+    Each task involves learning to discriminate two new fault classes while
+    retaining the ability to discriminate all previously learned ones.
     """
-    
+
     NAME = 'tennessee-eastman'
     SETTING = 'class-il'  # Class-incremental learning
-    N_CLASSES_PER_TASK = 1  # One fault per task
-    N_TASKS = 22  # Normal + 21 faults
+    N_CLASSES_PER_TASK = 2  # Two faults per task
+    N_TASKS = 11  # 22 classes / 2 per task
     SIZE = (52,)  # 52 process variables (time-series input)
     
     def __init__(self, args):

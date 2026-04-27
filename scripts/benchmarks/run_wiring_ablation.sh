@@ -75,6 +75,8 @@ launch() {
     export WANDB_API_KEY=\$(python3 -c 'import json;print(json.load(open(\"$WORKSPACE/.secrets.json\"))[\"wandb_api_key\"])')
     python utils/main.py $* \
       --seed $seed --num_workers 4 \
+      --enable_advanced_metrics 1 --enable_tau_monitor 1 \
+      --tau_log_interval 200 \
       --wandb_entity '$WANDB_ENTITY' --wandb_project '$WANDB_PROJECT' \
       --wandb_name '${exp}_seed${seed}' \
       2>&1 | tee '$lf'
