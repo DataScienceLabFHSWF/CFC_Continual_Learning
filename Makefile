@@ -37,13 +37,17 @@ help:
 	@echo "    make validate        Quick 1-epoch smoke test"
 	@echo ""
 	@echo "  Experiments:"
-	@echo "    make run-tep         Rerun TEP (fixed dataset loader)"
-	@echo "    make run-ablations   Run H1/H2 ablation experiments"
-	@echo "    make run-all-missing Run everything that's missing"
+	@echo "    make run-tep              Rerun TEP (fixed dataset loader)"
+	@echo "    make run-ablations        Run legacy LTC/RandomSparse ablation grid"
+	@echo "    make run-wiring-ablation  H1: AutoNCP vs RandomSparse vs Dense CfC"
+	@echo "    make run-mechanistic      H2/H3: tau + advanced-metrics on subset"
+	@echo "    make run-all-missing      Run everything that's missing"
 	@echo ""
 	@echo "  Analysis & Paper:"
-	@echo "    make analyze         Pull WandB data, generate tables"
-	@echo "    make paper           Compile LaTeX paper"
+	@echo "    make results-db           Pull WandB -> single source-of-truth CSV"
+	@echo "    make paper-tables         Regen LaTeX tables w/ Wilcoxon markers"
+	@echo "    make analyze              Legacy WandB pull (kept for compat)"
+	@echo "    make paper                Compile LaTeX paper"
 	@echo "    make paper-clean     Remove LaTeX aux files"
 	@echo "    make docs            Build Sphinx documentation"
 	@echo "    make test            Run the Python test suite"
@@ -182,10 +186,41 @@ run-ablations-cifar:
 		done; \
 	done
 
+# ==== RUN WIRING ABLATION (H1) ====
+.PHONY: run-wiring-ablation
+run-wiring-ablation:
+	@echo "=== Wiring Ablation (H1: AutoNCP vs RandomSparse vs Dense) ==="
+	@$(SCRIPTS)/benchmarks/run_wiring_ablation.sh --dataset all --max-parallel $(MAX_PARALLEL)
+
+# ==== RUN MECHANISTIC METRICS (H2/H3) ====
+.PHONY: run-mechanistic
+run-mechanistic:
+	@echo "=== Mechanistic Metrics (tau monitor + advanced metrics) ==="
+	@$(SCRIPTS)/benchmarks/run_mechanistic.sh --max-parallel $(MAX_PARALLEL)
+
 # ==== RUN ALL MISSING ====
 .PHONY: run-all-missing
-run-all-missing: run-tep run-ablations
+run-all-missing: run-tep run-wiring-ablation run-mechanistic
 	@echo "=== All missing experiments launched ==="
+
+# ==== SOURCE-OF-TRUTH RESULTS DB ====
+.PHONY: results-db
+results-db:
+	@echo "=== Building source-of-truth results DB from WandB ==="
+	@cd $(WORKSPACE) && source $(VENV) && \
+		python3 scripts/analysis/build_results_db.py \
+			--output-dir paper_results/results_db --min-year 2025
+	@echo "Wrote paper_results/results_db/{raw_runs,summary}.csv"
+
+# ==== REGENERATE PAPER TABLES ====
+.PHONY: paper-tables
+paper-tables: results-db
+	@echo "=== Regenerating paper LaTeX tables (with Wilcoxon markers) ==="
+	@cd $(WORKSPACE) && source $(VENV) && \
+		python3 scripts/analysis/generate_paper_tables.py \
+			--raw paper_results/results_db/raw_runs.csv \
+			--out $(PAPER_DIR)/tables
+	@echo "Tables written to $(PAPER_DIR)/tables/"
 
 # ==== RESUME ====
 .PHONY: run-resume
