@@ -37,30 +37,54 @@ def parse_log_file(log_path: str) -> Dict:
         content = f.read()
         
         # Check if completed
-        if 'Experiment completed' in content or 'Task 5 accuracy' in content:
+        if 'Experiment completed' in content or 'wandb: Synced' in content or 'Run history:' in content:
             metrics['completed'] = True
         
-        # Extract accuracy values
-        # Pattern: "Task X accuracy: Y.YY%"
-        task_matches = re.findall(r'Task \d+ accuracy: ([\d.]+)%', content)
-        if task_matches:
-            metrics['task_il_acc'] = [float(x) for x in task_matches]
+        # Extract accuracy values for newer log format
+        # Example: "Accuracy for 20 task(s):         [Class-IL]: 6.79 %      [Task-IL]: 100.0 %"
+        class_task_matches = re.findall(
+            r'Accuracy for \d+ task\(s\):\s*\[Class-IL\]:\s*([\d.]+)\s*%.*?\[Task-IL\]:\s*([\d.]+)\s*%',
+            content,
+            flags=re.DOTALL,
+        )
+        if class_task_matches:
+            metrics['task_il_acc'] = [float(x[1]) for x in class_task_matches]
+            metrics['class_il_acc'] = [float(x[0]) for x in class_task_matches]
+            metrics['final_class_il'] = float(class_task_matches[-1][0])
+            metrics['final_task_il'] = float(class_task_matches[-1][1])
         
-        # Extract Class-IL and Task-IL from final evaluation
-        class_il_match = re.search(r'Class-IL accuracy: ([\d.]+)%', content)
-        task_il_match = re.search(r'Task-IL accuracy: ([\d.]+)%', content)
+        # Older alternate format
+        class_il_match = re.search(r'Class-IL accuracy:\s*([\d.]+)%', content)
+        task_il_match = re.search(r'Task-IL accuracy:\s*([\d.]+)%', content)
         
-        if class_il_match:
+        if class_il_match and metrics['final_class_il'] is None:
             metrics['final_class_il'] = float(class_il_match.group(1))
-        if task_il_match:
+        if task_il_match and metrics['final_task_il'] is None:
             metrics['final_task_il'] = float(task_il_match.group(1))
+        
+        # Parse raw per-task accuracy values if available
+        raw_match = re.search(
+            r'Raw accuracy values:\s*Class-IL \[([^\]]+)\] \| Task-IL \[([^\]]+)\]',
+            content,
+        )
+        if raw_match:
+            class_vals = [float(x.strip()) for x in raw_match.group(1).split(',') if x.strip()]
+            task_vals = [float(x.strip()) for x in raw_match.group(2).split(',') if x.strip()]
+            metrics['class_il_acc'] = class_vals
+            metrics['task_il_acc'] = task_vals
+            if metrics['final_class_il'] is None and class_vals:
+                metrics['final_class_il'] = class_vals[-1]
+            if metrics['final_task_il'] is None and task_vals:
+                metrics['final_task_il'] = task_vals[-1]
         
         # Calculate averages
         if metrics['task_il_acc']:
             metrics['avg_task_il'] = np.mean(metrics['task_il_acc'])
+        if metrics['class_il_acc']:
+            metrics['avg_class_il'] = np.mean(metrics['class_il_acc'])
         
         # Calculate forgetting (drop from max to final)
-        if len(metrics['task_il_acc']) > 1:
+        if metrics['task_il_acc'] and len(metrics['task_il_acc']) > 1:
             max_acc = max(metrics['task_il_acc'])
             final_acc = metrics['task_il_acc'][-1]
             metrics['forgetting'] = max_acc - final_acc
@@ -172,8 +196,12 @@ def generate_summary_tables(df: pd.DataFrame, output_dir: Path):
     
     output_dir.mkdir(exist_ok=True, parents=True)
     
-    # Group by dataset, backbone, model, buffer_size
-    grouped = df.groupby(['dataset', 'backbone', 'model', 'buffer_size'])
+    # Use buffer_size only when it is present in the data
+    group_cols = ['dataset', 'backbone', 'model']
+    if df['buffer_size'].notna().any():
+        group_cols.append('buffer_size')
+    
+    grouped = df.groupby(group_cols)
     
     # Calculate mean and std across seeds
     summary = grouped.agg({
@@ -189,7 +217,10 @@ def generate_summary_tables(df: pd.DataFrame, output_dir: Path):
     # Generate dataset-specific summaries
     for dataset in df['dataset'].unique():
         dataset_df = df[df['dataset'] == dataset]
-        dataset_summary = dataset_df.groupby(['backbone', 'model', 'buffer_size']).agg({
+        group_cols = ['backbone', 'model']
+        if dataset_df['buffer_size'].notna().any():
+            group_cols.append('buffer_size')
+        dataset_summary = dataset_df.groupby(group_cols).agg({
             'final_class_il': ['mean', 'std', 'count'],
             'final_task_il': ['mean', 'std', 'count'],
             'forgetting': ['mean', 'std'],
@@ -221,8 +252,12 @@ def generate_summary_tables(df: pd.DataFrame, output_dir: Path):
         if len(dataset_df) == 0:
             continue
         
+        group_cols = ['backbone', 'model']
+        if dataset_df['buffer_size'].notna().any():
+            group_cols.append('buffer_size')
+        
         # Average across seeds
-        avg_df = dataset_df.groupby(['backbone', 'model', 'buffer_size']).agg({
+        avg_df = dataset_df.groupby(group_cols).agg({
             'final_class_il': 'mean',
             'final_task_il': 'mean',
         }).reset_index()
@@ -240,8 +275,12 @@ def generate_latex_tables(df: pd.DataFrame, output_dir: Path):
     for dataset in df['dataset'].unique():
         dataset_df = df[df['dataset'] == dataset].copy()
         
+        group_cols = ['backbone', 'model']
+        if dataset_df['buffer_size'].notna().any():
+            group_cols.append('buffer_size')
+        
         # Average across seeds
-        summary = dataset_df.groupby(['backbone', 'model', 'buffer_size']).agg({
+        summary = dataset_df.groupby(group_cols).agg({
             'final_class_il': ['mean', 'std'],
             'final_task_il': ['mean', 'std'],
         }).round(2)
@@ -249,14 +288,17 @@ def generate_latex_tables(df: pd.DataFrame, output_dir: Path):
         # Format as mean ± std
         latex_rows = []
         for idx, row in summary.iterrows():
-            backbone, model, buffer = idx
+            if len(group_cols) == 3:
+                backbone, model, buffer = idx
+                buffer_str = str(buffer) if buffer is not None else '-'
+            else:
+                backbone, model = idx
+                buffer_str = '-'
             
             class_il_mean = row[('final_class_il', 'mean')]
             class_il_std = row[('final_class_il', 'std')]
             task_il_mean = row[('final_task_il', 'mean')]
             task_il_std = row[('final_task_il', 'std')]
-            
-            buffer_str = str(buffer) if buffer is not None else '-'
             
             latex_row = f"{backbone} & {model} & {buffer_str} & "
             latex_row += f"{class_il_mean:.2f} $\\pm$ {class_il_std:.2f} & "

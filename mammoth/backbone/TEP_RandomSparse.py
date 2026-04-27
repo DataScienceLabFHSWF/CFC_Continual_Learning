@@ -48,11 +48,11 @@ class BaseTEP_RandomSparse(MammothBackbone):
         # Project input
         x = self.input_projection(x)
         
+        # Reset hidden state each batch to avoid size mismatch on last batch
+        self.hidden_state = None
+        
         # Process through CfC
-        if self.hidden_state is not None:
-            cfc_out, self.hidden_state = self.cfc(x, self.hidden_state)
-        else:
-            cfc_out, self.hidden_state = self.cfc(x)
+        cfc_out, self.hidden_state = self.cfc(x)
         
         # Use last timestep
         features = cfc_out[:, -1, :]

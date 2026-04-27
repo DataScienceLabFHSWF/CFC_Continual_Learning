@@ -32,6 +32,7 @@ WANDB_PROJECT="mammoth"
 DATASET="all"
 DRY_RUN=false
 FORCE_RERUN=false
+RESUME_EXPERIMENT=""
 MAX_PARALLEL=16  # Increased from 4 to 16 for better GPU utilization
 SEEDS=(0 1 2)
 
@@ -54,6 +55,10 @@ while [[ $# -gt 0 ]]; do
       MAX_PARALLEL="$2"
       shift 2
       ;;
+    --resume-experiment)
+      RESUME_EXPERIMENT="$2"
+      shift 2
+      ;;
     *)
       echo "Unknown option: $1"
       exit 1
@@ -65,6 +70,8 @@ done
 mkdir -p "$RESULTS_DIR"
 mkdir -p "$CHECKPOINT_DIR"
 mkdir -p "$LOG_DIR"
+LOG_DIR="$(realpath "$LOG_DIR")"
+RESULTS_DIR="$(realpath "$RESULTS_DIR")"
 
 # Check if experiment already completed
 is_experiment_completed() {
@@ -79,7 +86,7 @@ is_experiment_completed() {
   
   # Check if log file exists and contains completion marker
   if [ -f "$log_file" ]; then
-    if grep -q "Experiment completed:" "$log_file" 2>/dev/null; then
+    if grep -q "Experiment completed:\|wandb: Synced\|Run history:" "$log_file" 2>/dev/null; then
       return 0  # Completed
     fi
   fi
@@ -87,6 +94,7 @@ is_experiment_completed() {
 }
 
 # Helper function to run experiment
+RESUME_SKIP=true
 run_experiment() {
   local exp_name=$1
   local dataset=$2
@@ -99,8 +107,19 @@ run_experiment() {
   local extra_args=$9
   
   local session_name="paper_${exp_name}_s${seed}"
-  local log_file="$LOG_DIR/${exp_name}_seed${seed}.log"
-  local result_file="$RESULTS_DIR/${exp_name}_seed${seed}.csv"
+  local log_file="$(realpath "$LOG_DIR")/${exp_name}_seed${seed}.log"
+  local result_file="$(realpath "$RESULTS_DIR")/${exp_name}_seed${seed}.csv"
+  local full_exp_name="${exp_name}_seed${seed}"
+
+  if [ -n "$RESUME_EXPERIMENT" ] && [ "$RESUME_SKIP" = true ]; then
+    if [ "$exp_name" = "$RESUME_EXPERIMENT" ] || [ "$full_exp_name" = "$RESUME_EXPERIMENT" ]; then
+      echo "  Resume target reached: $full_exp_name"
+      RESUME_SKIP=false
+    else
+      echo "  Skipping: $full_exp_name (waiting for resume target $RESUME_EXPERIMENT)"
+      return
+    fi
+  fi
   
   # Check if already completed
   if is_experiment_completed "$exp_name" "$seed"; then
@@ -129,6 +148,8 @@ run_experiment() {
     echo 'Seed: $seed'
     echo 'Started: \$(date)'
     echo 'WandB: $WANDB_ENTITY/$WANDB_PROJECT'
+    echo 'LOG_DIR: $LOG_DIR'
+    echo 'log_file: $log_file'
     echo '========================================'
     
     python utils/main.py \\
@@ -542,6 +563,66 @@ run_tep_experiments() {
     wait_for_slot
     run_experiment "tep_lstm_ewc" "tennessee-eastman" "ewc_on" "teplstm" \
       $N_EPOCHS 0.001 $BATCH_SIZE $seed "--e_lambda 0.5 --gamma 1.0"
+  done
+
+  echo ""
+  echo "----------------------------------------"
+  echo "TEP Ablation: LTC backbone"
+  echo "----------------------------------------"
+  
+  # TEP LTC - SGD
+  for seed in "${SEEDS[@]}"; do
+    wait_for_slot
+    run_experiment "tep_ltc_sgd" "tennessee-eastman" "sgd" "tepltc" \
+      $N_EPOCHS 0.001 $BATCH_SIZE $seed ""
+  done
+  
+  # TEP LTC - ER
+  for buffer in 200 500 1000; do
+    for seed in "${SEEDS[@]}"; do
+      wait_for_slot
+      run_experiment "tep_ltc_er${buffer}" "tennessee-eastman" "er" "tepltc" \
+        $N_EPOCHS 0.001 $BATCH_SIZE $seed "--buffer_size $buffer"
+    done
+  done
+  
+  # TEP LTC - DER++
+  for buffer in 200 500 1000; do
+    for seed in "${SEEDS[@]}"; do
+      wait_for_slot
+      run_experiment "tep_ltc_derpp${buffer}" "tennessee-eastman" "derpp" "tepltc" \
+        $N_EPOCHS 0.001 $BATCH_SIZE $seed "--buffer_size $buffer --alpha 0.1 --beta 0.5"
+    done
+  done
+  
+  echo ""
+  echo "----------------------------------------"
+  echo "TEP Ablation: Random Sparse backbone"
+  echo "----------------------------------------"
+  
+  # TEP RandomSparse - SGD
+  for seed in "${SEEDS[@]}"; do
+    wait_for_slot
+    run_experiment "tep_rsparse_sgd" "tennessee-eastman" "sgd" "tep-random-sparse" \
+      $N_EPOCHS 0.001 $BATCH_SIZE $seed ""
+  done
+  
+  # TEP RandomSparse - ER
+  for buffer in 200 500 1000; do
+    for seed in "${SEEDS[@]}"; do
+      wait_for_slot
+      run_experiment "tep_rsparse_er${buffer}" "tennessee-eastman" "er" "tep-random-sparse" \
+        $N_EPOCHS 0.001 $BATCH_SIZE $seed "--buffer_size $buffer"
+    done
+  done
+  
+  # TEP RandomSparse - DER++
+  for buffer in 200 500 1000; do
+    for seed in "${SEEDS[@]}"; do
+      wait_for_slot
+      run_experiment "tep_rsparse_derpp${buffer}" "tennessee-eastman" "derpp" "tep-random-sparse" \
+        $N_EPOCHS 0.001 $BATCH_SIZE $seed "--buffer_size $buffer --alpha 0.1 --beta 0.5"
+    done
   done
 }
 

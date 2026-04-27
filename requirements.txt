@@ -66,3 +66,5 @@ typing-inspection==0.4.2
 tzdata==2025.2
 urllib3==2.5.0
 wandb==0.22.3
+qpsolvers
+Sphinx==7.3.0

@@ -55,10 +55,9 @@ class BaseTEP_LTC(MammothBackbone):
         x = self.input_projection(x)
         
         # Process through LTC
-        if self.hidden_state is not None:
-            ltc_out, self.hidden_state = self.ltc(x, self.hidden_state)
-        else:
-            ltc_out, self.hidden_state = self.ltc(x)
+        # Reset hidden state each batch to avoid size mismatch on last batch
+        self.hidden_state = None
+        ltc_out, self.hidden_state = self.ltc(x)
         
         # Use last timestep
         features = ltc_out[:, -1, :]

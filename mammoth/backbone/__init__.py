@@ -112,7 +112,12 @@ class MammothBackbone(nn.Module):
         Returns:
             parameters tensor
         """
-        return torch.nn.utils.parameters_to_vector(self.parameters())
+        params = []
+        for p in self.parameters():
+            params.append(p.data.reshape(-1))
+        if params:
+            return torch.cat(params)
+        return torch.tensor([], device=self.device)
 
     def set_params(self, new_params: torch.Tensor) -> None:
         """
