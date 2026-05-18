@@ -48,6 +48,9 @@ help:
 	@echo "    make paper-tables         Regen LaTeX tables w/ Wilcoxon markers"
 	@echo "    make analyze              Legacy WandB pull (kept for compat)"
 	@echo "    make paper                Compile LaTeX paper"
+	@echo "    make hypothesis-metrics   H1–H4 wiring/dynamics tables from raw_runs.csv+logs"
+	@echo "    make paper-plots          Regenerate PNG figures"
+	@echo "    make paper-pipeline       Full analysis pipeline (DB→tables→metrics→plots)"
 	@echo "    make paper-clean     Remove LaTeX aux files"
 	@echo "    make docs            Build Sphinx documentation"
 	@echo "    make test            Run the Python test suite"
@@ -221,6 +224,40 @@ paper-tables: results-db
 			--raw paper_results/results_db/raw_runs.csv \
 			--out $(PAPER_DIR)/tables
 	@echo "Tables written to $(PAPER_DIR)/tables/"
+
+# ==== HYPOTHESIS METRICS (H1–H4) ====
+.PHONY: hypothesis-metrics
+hypothesis-metrics: results-db
+	@echo "=== Computing hypothesis metrics (H1 wiring ablation, H2/H3 internal dynamics) ==="
+	@cd $(WORKSPACE) && source $(VENV) && \
+		python3 scripts/analysis/compute_hypothesis_metrics.py \
+			--raw  paper_results/results_db/raw_runs.csv \
+			--logs paper_results/logs \
+			--out  $(PAPER_DIR)/tables
+	@echo "Hypothesis tables written to $(PAPER_DIR)/tables/"
+
+# ==== PAPER FIGURES ====
+.PHONY: paper-plots
+paper-plots: results-db
+	@echo "=== Generating paper figures ==="
+	@cd $(WORKSPACE) && source $(VENV) && \
+		python3 scripts/analysis/generate_paper_plots.py \
+			--raw paper_results/results_db/raw_runs.csv \
+			--out $(PAPER_DIR)/figures
+	@echo "Figures written to $(PAPER_DIR)/figures/"
+
+# ==== FULL PAPER ANALYSIS PIPELINE ====
+.PHONY: paper-pipeline
+paper-pipeline:
+	@echo "=== Running full analysis pipeline (DB → tables → metrics → plots) ==="
+	@cd $(WORKSPACE) && source $(VENV) && \
+		python3 scripts/analysis/run_paper_pipeline.py \
+			--raw   paper_results/results_db/raw_runs.csv \
+			--logs  paper_results/logs \
+			--tables $(PAPER_DIR)/tables \
+			--figs   $(PAPER_DIR)/figures \
+			--db-out paper_results/results_db
+	@echo "Pipeline complete."
 
 # ==== RESUME ====
 .PHONY: run-resume
