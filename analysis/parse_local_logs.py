@@ -16,7 +16,10 @@ def parse_log_file(filepath):
     
     dataset = parts[0]
     seed_part = parts[-1]
-    seed = int(seed_part.replace('seed', ''))
+    seed_match = re.match(r"seed(\d+)$", seed_part)
+    if not seed_match:
+        return None
+    seed = int(seed_match.group(1))
     
     # Heuristic for backbone and model
     # usually parts[1] is backbone, parts[2] is model+buffer
@@ -52,7 +55,8 @@ def main():
     
     for log_file in log_files:
         res = parse_log_file(log_file)
-        results.append(res)
+        if res is not None:
+            results.append(res)
         
     df = pd.DataFrame(results)
     

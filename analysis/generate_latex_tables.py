@@ -40,57 +40,51 @@ def generate_comparison_table(df, dataset, backbone_baseline, backbone_ours, cap
         print(f"No data for dataset {dataset}")
         return
 
-    # Parse method and buffer
+    # Parse method and buffer then create side-by-side rows for selected backbones.
     subset[['Method', 'Buffer']] = subset['model'].apply(lambda x: pd.Series(parse_model_buffer(x)))
-    
-    # Pivot to get backbones side by side
-    pivot = subset.pivot_table(
-        index=['Method', 'Buffer'], 
-        columns='backbone', 
-        values=['mean', 'std'],
-        aggfunc='first'
-    )
-    
-    # Check if backbones exist in data
+
     available_backbones = subset['backbone'].unique()
     if backbone_baseline not in available_backbones or backbone_ours not in available_backbones:
         print(f"Missing backbones for {dataset}. Found: {available_backbones}")
         return
 
+    base = subset[subset['backbone'] == backbone_baseline][['Method', 'Buffer', 'mean', 'std']].rename(
+        columns={'mean': 'base_mean', 'std': 'base_std'}
+    )
+    ours = subset[subset['backbone'] == backbone_ours][['Method', 'Buffer', 'mean', 'std']].rename(
+        columns={'mean': 'our_mean', 'std': 'our_std'}
+    )
+    merged = pd.merge(base, ours, on=['Method', 'Buffer'], how='outer')
+
     # Create formatted rows
     latex_rows = []
-    
+
     # Define order of methods
     method_order = ["SGD", "ER", "DER++", "ER-ACE", "JOINT"]
-    
-    # Sort index based on custom order
-    pivot = pivot.reset_index()
-    pivot['Method_Rank'] = pivot['Method'].apply(lambda x: method_order.index(x) if x in method_order else 99)
-    pivot['Buffer_Rank'] = pivot['Buffer'].apply(lambda x: int(x) if x != "-" else 9999)
-    pivot = pivot.sort_values(['Method_Rank', 'Buffer_Rank'])
-    
-    for _, row in pivot.iterrows():
+
+    merged['Method_Rank'] = merged['Method'].apply(lambda x: method_order.index(x) if x in method_order else 99)
+    merged['Buffer_Rank'] = merged['Buffer'].apply(lambda x: int(x) if str(x) != "-" else 9999)
+    merged = merged.sort_values(['Method_Rank', 'Buffer_Rank', 'Method', 'Buffer'])
+
+    for _, row in merged.iterrows():
         method = row['Method']
         buffer_val = row['Buffer']
-        
-        # Get values for baseline
-        base_mean = row[('mean', backbone_baseline)]
-        base_std = row[('std', backbone_baseline)]
-        
-        # Get values for ours
-        our_mean = row[('mean', backbone_ours)]
-        our_std = row[('std', backbone_ours)]
-        
+
+        base_mean = row['base_mean']
+        base_std = row['base_std']
+        our_mean = row['our_mean']
+        our_std = row['our_std']
+
         base_str = f"${base_mean:.1f} \\pm {base_std:.1f}$" if not pd.isna(base_mean) else "-"
         our_str = f"${our_mean:.1f} \\pm {our_std:.1f}$" if not pd.isna(our_mean) else "-"
-        
-        # Bold the winner
+
+        # Bold the winner when both values are available.
         if not pd.isna(base_mean) and not pd.isna(our_mean):
             if our_mean > base_mean:
                 our_str = f"\\textbf{{{our_str}}}"
             elif base_mean > our_mean:
                 base_str = f"\\textbf{{{base_str}}}"
-        
+
         latex_rows.append(f"{method} & {buffer_val} & {base_str} & {our_str} \\\\")
 
     # Construct full LaTeX table
