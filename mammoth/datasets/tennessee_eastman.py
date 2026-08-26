@@ -29,7 +29,8 @@ class TennesseeEastmanDataset(Dataset):
     - Goal: Learn new faults without forgetting detection of old faults
     """
     
-    def __init__(self, data_path, fault_ids=None, train=True, window_size=50, stride=10):
+    def __init__(self, data_path, fault_ids=None, train=True, window_size=50, stride=10,
+                 norm_mean=None, norm_std=None):
         """
         Args:
             data_path: Path to TEP dataset files
@@ -37,12 +38,18 @@ class TennesseeEastmanDataset(Dataset):
             train: Whether this is training or test data
             window_size: Number of timesteps in each sequence window
             stride: Stride for sliding window
+            norm_mean, norm_std: Fixed per-channel normalization statistics
+                (shape (52,)), computed once from normal-operation (fault 0)
+                training data and shared across all fault files/splits. If
+                None, they are computed here from fault 0's training file.
         """
         self.data_path = data_path
         self.fault_ids = fault_ids if fault_ids is not None else list(range(22))
         self.train = train
         self.window_size = window_size
         self.stride = stride
+        self.norm_mean = norm_mean
+        self.norm_std = norm_std
         
         # Load data
         self.windows = []
@@ -52,7 +59,22 @@ class TennesseeEastmanDataset(Dataset):
     def _load_data(self):
         """Load and preprocess TEP data."""
         mode = 'train' if self.train else 'test'
-        
+
+        # Fix: compute normalization stats ONCE from normal-operation (fault 0)
+        # training data, and reuse them for every fault file and split. The
+        # previous implementation normalized each fault's file independently
+        # (per-file z-score), which erases the very mean-shift signal that
+        # distinguishes a fault from normal operation -- every file ends up
+        # with mean 0 / std 1 per channel regardless of the fault, so no
+        # backbone (including the Joint upper bound) can discriminate classes.
+        if self.norm_mean is None or self.norm_std is None:
+            ref_path = os.path.join(self.data_path, 'd00.dat')
+            ref_data = np.loadtxt(ref_path)
+            if ref_data.shape[0] == 52:
+                ref_data = ref_data.T
+            self.norm_mean = ref_data.mean(axis=0)
+            self.norm_std = ref_data.std(axis=0) + 1e-8
+
         for fault_id in self.fault_ids:
             # TEP dataset files are typically named: d{fault_id}.dat or d{fault_id}_te.dat
             if self.train:
@@ -74,8 +96,9 @@ class TennesseeEastmanDataset(Dataset):
                 if data.shape[0] == 52:
                     data = data.T
                 
-                # Normalize data (z-score normalization)
-                data = (data - data.mean(axis=0)) / (data.std(axis=0) + 1e-8)
+                # Normalize with the SHARED reference stats (not per-file stats),
+                # so that fault-induced mean/variance shifts remain visible.
+                data = (data - self.norm_mean) / self.norm_std
                 
                 # Create sliding windows
                 num_windows = (len(data) - self.window_size) // self.stride + 1
