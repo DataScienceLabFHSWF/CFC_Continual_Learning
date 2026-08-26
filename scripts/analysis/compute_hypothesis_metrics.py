@@ -69,28 +69,6 @@ def _cell(values: np.ndarray, bold: bool = False, sig: str = "") -> str:
     return f"${inner}${sig}"
 
 
-def _wilcoxon_p(a: np.ndarray, b: np.ndarray) -> Optional[float]:
-    if len(a) < 3 or len(a) != len(b):
-        return None
-    if np.allclose(a, b):
-        return None
-    try:
-        from scipy.stats import wilcoxon
-        return float(wilcoxon(a, b, zero_method="wilcox", alternative="two-sided").pvalue)
-    except Exception:
-        return None
-
-
-def _sig(p: Optional[float]) -> str:
-    if p is None:
-        return ""
-    if p < 0.01:
-        return "$^{**}$"
-    if p < 0.05:
-        return "$^{*}$"
-    return ""
-
-
 def _aligned_values(df: pd.DataFrame, backbone: str, model: str,
                     buffer: Optional[int]) -> np.ndarray:
     mask = (df["backbone"] == backbone) & (df["model"] == model)
@@ -147,7 +125,6 @@ def build_wiring_table(df: pd.DataFrame, out_dir: Path) -> None:
         # AutoNCP is the proposed; compare to random-sparse baseline
         ancp_vals = row_vals.get("AutoNCP (Ours)", np.array([]))
         rs_vals   = row_vals.get("Random-Sparse",  np.array([]))
-        p = _wilcoxon_p(ancp_vals, rs_vals)
 
         buf_label = str(buffer) if buffer else "--"
         cells = []
@@ -155,8 +132,7 @@ def build_wiring_table(df: pd.DataFrame, out_dir: Path) -> None:
             v = row_vals.get(name, np.array([]))
             is_best = (name == "AutoNCP (Ours)" and len(ancp_vals) > 0 and
                        (len(rs_vals) == 0 or ancp_vals.mean() >= rs_vals.mean()))
-            sig_str = _sig(p) if name == "AutoNCP (Ours)" else ""
-            cells.append(_cell(v, bold=is_best, sig=sig_str))
+            cells.append(_cell(v, bold=is_best))
 
         lines.append(f"  {label} & {buf_label} & " + " & ".join(cells) + r" \\")
 
@@ -171,8 +147,7 @@ def build_wiring_table(df: pd.DataFrame, out_dir: Path) -> None:
         r"\centering",
         r"\caption{\textbf{Wiring ablation (H1).} Class-IL accuracy (\%) on Split-MNIST"
         r" comparing structured AutoNCP wiring against control wirings at matched"
-        r" parameter count. $^*$ $p<0.05$, $^{**}$ $p<0.01$ (paired Wilcoxon,"
-        f" {n_note}).}}",
+        f" parameter count ({n_note}). Bold marks the best wiring per row.}}",
         r"\label{tab:wiring_ablation}",
         r"\resizebox{\columnwidth}{!}{%",
         f"\\begin{{tabular}}{{{col_spec}}}",

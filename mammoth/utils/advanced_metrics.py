@@ -43,6 +43,7 @@ class RepresentationalStabilityMetric:
                 features = model(inputs, returnt='features')
                 representations.append(features.cpu())
         
+        model.train()
         return torch.cat(representations, dim=0)
     
     def compute_stability(self, repr_before: torch.Tensor, 
@@ -324,5 +325,7 @@ class AdvancedMetricsManager:
     
     def analyze_all(self, task_pairs: Optional[List[Tuple[int, int]]] = None):
         """Run all analyses at the end."""
+        summary: Dict[str, float] = {}
         if task_pairs:
-            self.gradient_interference.analyze_interference(task_pairs)
+            summary.update(self.gradient_interference.analyze_interference(task_pairs))
+        return summary

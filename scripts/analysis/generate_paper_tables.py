@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate paper-ready LaTeX tables with paired Wilcoxon significance markers.
+Generate paper-ready LaTeX tables from the results database.
 
 Reads `paper_results/results_db/raw_runs.csv` (produced by
 `build_results_db.py`) and writes:
@@ -8,13 +8,11 @@ Reads `paper_results/results_db/raw_runs.csv` (produced by
   LTC_CFC_ContinualLearning/tables/cifar_results.tex
   LTC_CFC_ContinualLearning/tables/cnn_cfc_results.tex
 
-For each (dataset, model, buffer_size) cell we run a paired Wilcoxon
-signed-rank test across seeds between the proposed backbone and the baseline
-backbone, and annotate the proposed value with a single marker:
-    *  : p < 0.05
-    ** : p < 0.01
-
-Cells with fewer than 3 paired seeds are reported without a marker.
+Each cell reports mean $\pm$ std over seeds; the better backbone per row is
+bolded. We do not report significance stars: an exact paired Wilcoxon
+signed-rank test needs at least 6 matched seeds to ever reach p<0.05 (the
+minimum attainable p-value is $2/2^n$), so at our current n=3--5 no cell
+could show a marker regardless of effect size.
 
 Usage:
     python scripts/analysis/generate_paper_tables.py \
@@ -79,35 +77,7 @@ CIFAR_ROWS: List[Dict] = [
 ]
 
 
-def _wilcoxon(prop: np.ndarray, base: np.ndarray) -> Optional[float]:
-    """Paired Wilcoxon. Returns p-value, or None if not computable."""
-    if len(prop) != len(base) or len(prop) < 3:
-        return None
-    if np.allclose(prop, base):
-        return None
-    try:
-        from scipy.stats import wilcoxon  # local import; optional dep
-    except ImportError:
-        return None
-    try:
-        # zero_method='wilcox' is default; fall back to a gentle method for small n.
-        res = wilcoxon(prop, base, zero_method="wilcox", alternative="two-sided")
-        return float(res.pvalue)
-    except ValueError:
-        return None
-
-
-def _sig_marker(p: Optional[float]) -> str:
-    if p is None:
-        return ""
-    if p < 0.01:
-        return "$^{**}$"
-    if p < 0.05:
-        return "$^{*}$"
-    return ""
-
-
-def _cell(values: np.ndarray, sig: str = "", bold: bool = False) -> str:
+def _cell(values: np.ndarray, bold: bool = False) -> str:
     if values.size == 0:
         return "--"
     mean = values.mean()
@@ -118,7 +88,7 @@ def _cell(values: np.ndarray, sig: str = "", bold: bool = False) -> str:
         inner = f"{mean:.2f} \\pm {std:.2f}"
     if bold:
         inner = f"\\mathbf{{{inner}}}"
-    return f"${inner}${sig}"
+    return f"${inner}$"
 
 
 def _aligned_seeds(
@@ -143,11 +113,9 @@ def _row_for_pair(
     if paired.empty:
         base_vals = base["class_il"].to_numpy()
         prop_vals = prop["class_il"].to_numpy()
-        p = None
     else:
         base_vals = paired["class_il_base"].to_numpy()
         prop_vals = paired["class_il_prop"].to_numpy()
-        p = _wilcoxon(prop_vals, base_vals)
 
     if base_vals.size == 0 and prop_vals.size == 0:
         return "--", "--"
@@ -161,7 +129,7 @@ def _row_for_pair(
 
     return (
         _cell(base_vals, bold=bold_base),
-        _cell(prop_vals, sig=_sig_marker(p), bold=bold_prop),
+        _cell(prop_vals, bold=bold_prop),
     )
 
 
@@ -217,8 +185,7 @@ def _render_table(
     lines.append(
         "\\vspace{2pt}\\\\\\footnotesize "
         "Class-IL accuracy (\\%), mean $\\pm$ std over seeds. "
-        "$^{*}$ paired Wilcoxon $p<0.05$, "
-        "$^{**}$ $p<0.01$ vs.\\ baseline."
+        "Bold marks the better backbone per row."
     )
     lines.append("\\end{table}")
     return "\n".join(lines) + "\n"

@@ -187,13 +187,15 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     metrics_manager = None
     
     if args.enable_tau_monitor and get_tau_monitor is not None:
-        # Check if the backbone is LTC-based
+        # Attempt for any recurrent-liquid backbone (cfc/ltc); extract_tau_values
+        # itself returns None gracefully if no literal tau parameter is found
+        # (e.g. CfC's default gated mode has no single per-neuron time constant).
         backbone_name = args.backbone.lower() if hasattr(args, 'backbone') else ''
-        if 'ltc' in backbone_name:
+        if 'ltc' in backbone_name or 'cfc' in backbone_name:
             tau_monitor = get_tau_monitor(enabled=True, log_every_n_steps=args.tau_log_interval)
-            logging.info("Tau monitoring enabled for LTC backbone")
+            logging.info(f"Tau monitoring enabled for backbone '{backbone_name}'")
         else:
-            logging.warning(f"Tau monitoring requested but backbone '{backbone_name}' is not LTC-based. Skipping.")
+            logging.warning(f"Tau monitoring requested but backbone '{backbone_name}' is not CfC/LTC-based. Skipping.")
     
     if args.enable_advanced_metrics and AdvancedMetricsManager is not None:
         metrics_config = {

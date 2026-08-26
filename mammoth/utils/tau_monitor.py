@@ -39,7 +39,15 @@ class TauMonitor:
         if not self.enabled:
             return None
         
-        # Try to find LTC layer
+        # Search all named parameters for an ncps tau-like parameter. Only
+        # CfC/LTC cells run in mode="pure" expose a literal per-neuron
+        # `w_tau`; the default gated mode has no single time-constant
+        # parameter (it uses input-dependent time_a/time_b gates instead).
+        for name, param in model.named_parameters():
+            if name.endswith('w_tau') or name.endswith('.tau'):
+                return param.detach().cpu()
+        
+        # Legacy fallback paths (kept for backward compatibility).
         ltc_layer = None
         if hasattr(model, 'ltc'):
             ltc_layer = model.ltc
@@ -49,8 +57,6 @@ class TauMonitor:
         if ltc_layer is None:
             return None
         
-        # Extract tau values (implementation depends on ncps library)
-        # This is a placeholder - actual implementation depends on ncps internal structure
         if hasattr(ltc_layer, 'tau'):
             return ltc_layer.tau.detach().cpu()
         elif hasattr(ltc_layer, '_wiring') and hasattr(ltc_layer._wiring, 'tau'):

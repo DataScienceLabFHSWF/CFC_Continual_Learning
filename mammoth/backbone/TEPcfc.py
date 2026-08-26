@@ -60,13 +60,18 @@ class BaseTEPCfC(MammothBackbone):
             # So we use hidden_size units and hidden_size//2 output
             wiring = AutoNCP(hidden_size, num_classes)
             self.rnn = CfC(hidden_size, wiring, batch_first=True, mixed_memory=not use_ltc)
+            rnn_output_size = num_classes
         else:
-            # Fully-connected CfC (for ablation)
+            # Fully-connected CfC (for ablation). NB: ncps' FullyConnected wiring
+            # has a single layer spanning all units, so WiredCfCCell returns the
+            # full hidden_size-dim state rather than a num_classes-dim readout
+            # (unlike AutoNCP, whose motor layer is exactly num_classes wide).
             wiring = FullyConnected(hidden_size, num_classes)
             self.rnn = CfC(hidden_size, wiring, batch_first=True, mixed_memory=not use_ltc)
+            rnn_output_size = hidden_size
         
         # Output layer (CfC already outputs num_classes, but we add a final linear for flexibility)
-        self.output_layer = nn.Linear(num_classes, num_classes)
+        self.output_layer = nn.Linear(rnn_output_size, num_classes)
         self.classifier = self.output_layer
         
         # Hidden state (persistent across batches for continual learning)

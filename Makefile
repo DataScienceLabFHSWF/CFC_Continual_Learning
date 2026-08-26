@@ -45,7 +45,7 @@ help:
 	@echo ""
 	@echo "  Analysis & Paper:"
 	@echo "    make results-db           Pull WandB -> single source-of-truth CSV"
-	@echo "    make paper-tables         Regen LaTeX tables w/ Wilcoxon markers"
+	@echo "    make paper-tables         Regen LaTeX tables (mean/std, bold-best)"
 	@echo "    make analyze              Legacy WandB pull (kept for compat)"
 	@echo "    make paper                Compile LaTeX paper"
 	@echo "    make hypothesis-metrics   H1–H4 wiring/dynamics tables from raw_runs.csv+logs"
@@ -218,7 +218,7 @@ results-db:
 # ==== REGENERATE PAPER TABLES ====
 .PHONY: paper-tables
 paper-tables: results-db
-	@echo "=== Regenerating paper LaTeX tables (with Wilcoxon markers) ==="
+	@echo "=== Regenerating paper LaTeX tables ==="
 	@cd $(WORKSPACE) && source $(VENV) && \
 		python3 scripts/analysis/generate_paper_tables.py \
 			--raw paper_results/results_db/raw_runs.csv \
