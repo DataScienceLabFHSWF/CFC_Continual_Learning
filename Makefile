@@ -41,6 +41,7 @@ help:
 	@echo "    make run-ablations        Run legacy LTC/RandomSparse ablation grid"
 	@echo "    make run-wiring-ablation  H1: AutoNCP vs RandomSparse vs Dense CfC"
 	@echo "    make run-mechanistic      H2/H3: tau + advanced-metrics on subset"
+	@echo "    make run-industrial-extra Steel Plates Faults + SECOM + C-MAPSS"
 	@echo "    make run-all-missing      Run everything that's missing"
 	@echo ""
 	@echo "  Analysis & Paper:"
@@ -201,9 +202,27 @@ run-mechanistic:
 	@echo "=== Mechanistic Metrics (tau monitor + advanced metrics) ==="
 	@$(SCRIPTS)/benchmarks/run_mechanistic.sh --max-parallel $(MAX_PARALLEL)
 
+# ==== RUN INDUSTRIAL BENCHMARKS (Steel Plates Faults, SECOM, C-MAPSS) ====
+.PHONY: run-industrial-extra
+run-industrial-extra:
+	@echo "=== Additional Industrial Benchmarks (Steel Plates Faults, SECOM, C-MAPSS) ==="
+	@$(SCRIPTS)/benchmarks/run_industrial_extra.sh --dataset all --max-parallel $(MAX_PARALLEL)
+
+.PHONY: run-steel-plates
+run-steel-plates:
+	@$(SCRIPTS)/benchmarks/run_industrial_extra.sh --dataset steel-plates-faults --max-parallel $(MAX_PARALLEL)
+
+.PHONY: run-secom
+run-secom:
+	@$(SCRIPTS)/benchmarks/run_industrial_extra.sh --dataset secom --max-parallel $(MAX_PARALLEL)
+
+.PHONY: run-cmapss
+run-cmapss:
+	@$(SCRIPTS)/benchmarks/run_industrial_extra.sh --dataset cmapss --max-parallel $(MAX_PARALLEL)
+
 # ==== RUN ALL MISSING ====
 .PHONY: run-all-missing
-run-all-missing: run-tep run-wiring-ablation run-mechanistic
+run-all-missing: run-tep run-wiring-ablation run-mechanistic run-industrial-extra
 	@echo "=== All missing experiments launched ==="
 
 # ==== SOURCE-OF-TRUTH RESULTS DB ====
